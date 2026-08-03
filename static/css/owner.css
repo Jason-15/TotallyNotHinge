@@ -603,6 +603,29 @@
   box-shadow: 0 0 0 3px var(--wing);
 }
 
+/* Sticky so Save is reachable without scrolling to the bottom of the form. */
+.edit-footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--s-4) var(--s-5) calc(var(--s-4) + env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+
+.edit-status {
+  font-size: var(--t-sm);
+  color: var(--ink-3);
+  transition: color 0.2s var(--ease);
+}
+.edit-status.is-flash {
+  color: var(--like);
+  font-weight: 600;
+}
+
 .edit-card {
   background: var(--surface);
   border: 1px solid var(--line);

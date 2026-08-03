@@ -35,6 +35,9 @@
   document.addEventListener('click', (event) => {
     const target = event.target.closest('[data-goto]');
     if (!target) return;
+    // Navigating away from Edit Profile must not silently drop the field the
+    // owner is still typing in.
+    if (WM.currentScreen() === 'edit') flushPendingEdit();
     WM.showScreen(target.dataset.goto);
     render();
   });
@@ -366,6 +369,35 @@
     if (!isEditing('#edit-bio')) paintEditBio();
   }
 
+  /* A field saves when it loses focus. Tapping Save (or Done) while still
+     inside one would otherwise leave that last edit unsent, so blur first and
+     let the change handlers fire. */
+  function flushPendingEdit() {
+    const active = document.activeElement;
+    if (active && typeof active.blur === 'function' && active.tagName !== 'BODY') {
+      active.blur();
+    }
+  }
+
+  function markSaved(label = 'All changes saved') {
+    const status = $('edit-status');
+    if (!status) return;
+    status.textContent = label;
+    status.classList.add('is-flash');
+    setTimeout(() => status.classList.remove('is-flash'), 900);
+  }
+
+  $('edit-save').addEventListener('click', () => {
+    flushPendingEdit();
+    // Give the blur-triggered change handlers a tick to send before confirming.
+    setTimeout(() => {
+      markSaved();
+      WM.toast('Profile updated 🪽', { wing: true, duration: 1600 });
+      WM.showScreen('hub');
+      render();
+    }, 60);
+  });
+
   function isEditing(selector) {
     const host = document.querySelector(selector);
     return !!(host && document.activeElement && host.contains(document.activeElement));
@@ -443,6 +475,7 @@
         photoDraft.splice(to, 0, item);
         paintEditPhotos();
         WM.send('set_photo_order', { order: photoDraft });
+        markSaved('Order saved');
         // The server reorders the list, so our draft is now the identity order.
         photoDraft = photoDraft.map((_, index) => index);
       }
@@ -486,6 +519,7 @@
         return;
       }
       WM.toast('Photo updated 🪽', { wing: true });
+      markSaved('Photo saved');
     } catch (error) {
       WM.toast('Upload failed — check your connection.');
     } finally {
@@ -512,14 +546,16 @@
       .join('');
 
     $('edit-prompts').querySelectorAll('[data-prompt-q]').forEach((input) => {
-      input.addEventListener('change', () =>
-        WM.send('edit_prompt', { index: Number(input.dataset.promptQ), question: input.value })
-      );
+      input.addEventListener('change', () => {
+        WM.send('edit_prompt', { index: Number(input.dataset.promptQ), question: input.value });
+        markSaved('Saved');
+      });
     });
     $('edit-prompts').querySelectorAll('[data-prompt-a]').forEach((field) => {
-      field.addEventListener('change', () =>
-        WM.send('edit_prompt', { index: Number(field.dataset.promptA), answer: field.value })
-      );
+      field.addEventListener('change', () => {
+        WM.send('edit_prompt', { index: Number(field.dataset.promptA), answer: field.value });
+        markSaved('Saved');
+      });
     });
   }
 
@@ -543,9 +579,10 @@
       .join('')}</div>`;
 
     $('edit-bio').querySelectorAll('[data-bio]').forEach((input) => {
-      input.addEventListener('change', () =>
-        WM.send('edit_bio', { fields: { [input.dataset.bio]: input.value } })
-      );
+      input.addEventListener('change', () => {
+        WM.send('edit_bio', { fields: { [input.dataset.bio]: input.value } });
+        markSaved('Saved');
+      });
     });
   }
 

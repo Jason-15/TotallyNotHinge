@@ -67,11 +67,18 @@
         <div class="recap-section__title">About you</div>
         <div id="edit-bio"></div>
 
-        <p class="note" style="padding-bottom: var(--s-8);">
-          Changes are live straight away — this is your own profile, so nothing needs approving.
+        <p class="note" style="padding-bottom: var(--s-6);">
           Photos you upload last for this session.
         </p>
       </div>
+    </div>
+
+    <!-- Edits already save on blur, but with no button it's impossible to tell
+         whether they stuck. This flushes whatever field is still focused and
+         confirms, so there's a definite end to editing. -->
+    <div class="edit-footer">
+      <span class="edit-status" id="edit-status">All changes saved</span>
+      <button class="btn btn--primary" id="edit-save">Save</button>
     </div>
   </section>
 
