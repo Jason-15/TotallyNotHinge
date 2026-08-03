@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Hinge — Sheshu</title>
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/hinge.css">
+  <link rel="stylesheet" href="/static/css/owner.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪽</text></svg>">
+</head>
+<body data-code="{{ code }}" data-participant="{{ participant_id }}">
+<div class="app">
+
+  <!-- ============================ Edit Profile hub — Wing Mode's entry point -->
+  <section class="screen is-active" data-screen="hub">
+    <header class="topbar">
+      <!-- Wing Mode's entry point: top left, one tap into the flow. -->
+      <button class="wing-entry" id="open-wing-mode">🪽 Wing Mode</button>
+      <div class="row">
+        <button class="btn btn--quiet btn--sm" data-goto="recap" id="hub-recap-link" hidden>Recap</button>
+        <!-- Same affordance every Hinge user has: enter a code, become a wing. -->
+        <button class="code-btn" id="open-code">Enter code</button>
+        <button class="btn btn--quiet btn--sm" id="logout">Log out</button>
+      </div>
+    </header>
+
+    <div class="scroll">
+      <div class="hub">
+        <div>
+          <div class="topbar__title">Edit Profile</div>
+          <div class="note" id="hub-sub"></div>
+        </div>
+
+        <hr class="hairline">
+        <div class="row" style="justify-content: space-between;">
+          <div>
+            <div class="topbar__title">Your profile</div>
+            <div class="note" id="hub-live-note">This is what matches see</div>
+          </div>
+          <button class="btn btn--ghost btn--sm" data-goto="edit">Edit</button>
+        </div>
+        <div id="hub-profile"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================== the owner editing their own profile -->
+  <section class="screen" data-screen="edit">
+    <header class="topbar">
+      <button class="btn btn--quiet btn--sm" data-goto="hub">← Done</button>
+      <div class="topbar__title">Edit Profile</div>
+      <span style="width: 56px;"></span>
+    </header>
+
+    <div class="scroll">
+      <div class="stack">
+        <div class="recap-section__title" style="margin-top: 0;">Photos</div>
+        <p class="note">Drag to reorder. Tap any photo to swap in a new one.</p>
+        <div class="reorder-grid" id="edit-photos"></div>
+        <!-- One shared file input, retargeted at whichever slot was tapped. -->
+        <input type="file" id="photo-input" accept="image/*" hidden>
+
+        <div class="recap-section__title">Prompts</div>
+        <div id="edit-prompts"></div>
+
+        <div class="recap-section__title">About you</div>
+        <div id="edit-bio"></div>
+
+        <p class="note" style="padding-bottom: var(--s-8);">
+          Changes are live straight away — this is your own profile, so nothing needs approving.
+          Photos you upload last for this session.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================ session type picker -->
+  <section class="screen" data-screen="type">
+    <header class="topbar">
+      <button class="btn btn--quiet btn--sm" data-goto="hub">← Back</button>
+      <div class="topbar__title">Wing Mode</div>
+      <span style="width: 56px;"></span>
+    </header>
+
+    <div class="scroll">
+      <div class="stack">
+        <div>
+          <h2 style="margin: 0 0 var(--s-2); font-size: var(--t-lg); letter-spacing: -0.01em;">What do you want help with?</h2>
+          <p class="note">You can pick one, or do everything in a single session.</p>
+        </div>
+
+        <button class="choice" data-type="review">
+          <span class="choice__radio"></span>
+          <span>
+            <span class="choice__title">Profile Review</span>
+            <span class="choice__desc">Friends look at your photos and prompts and suggest changes.</span>
+          </span>
+        </button>
+
+        <button class="choice" data-type="swipe">
+          <span class="choice__radio"></span>
+          <span>
+            <span class="choice__title">Swiping Together</span>
+            <span class="choice__desc">Friends see the profiles you're browsing and react in real time.</span>
+          </span>
+        </button>
+
+        <button class="choice is-selected" data-type="both">
+          <span class="choice__radio"></span>
+          <span>
+            <span class="choice__title">Both <span class="tag">Recommended</span></span>
+            <span class="choice__desc">One session, one invite. Gives your friends the full experience.</span>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <div style="padding: var(--s-4) var(--s-5) calc(var(--s-5) + env(safe-area-inset-bottom, 0px));">
+      <button class="btn btn--primary btn--block" id="create-invite">Get invite link</button>
+    </div>
+  </section>
+
+  <!-- ========================================== invite + live waiting room -->
+  <section class="screen" data-screen="invite">
+    <header class="topbar">
+      <button class="btn btn--quiet btn--sm" data-goto="type">← Back</button>
+      <div class="topbar__title">Invite your wings</div>
+      <span style="width: 56px;"></span>
+    </header>
+
+    <div class="scroll">
+      <div class="stack">
+        <div class="invite-message">
+          <div id="invite-copy"></div>
+          <div class="invite-link" id="invite-url"></div>
+        </div>
+
+        <div class="row">
+          <button class="btn btn--primary grow" id="share-invite">Share invite</button>
+          <button class="btn btn--ghost" id="copy-invite">Copy message</button>
+        </div>
+
+        <div>
+          <p class="note center" style="margin-bottom: var(--s-2);">or have them enter this code</p>
+          <!-- The code gets read aloud and typed on someone else's phone, so it
+               needs its own copy that isn't bundled with the message. -->
+          <div class="code-row">
+            <button class="code-display" id="invite-code" title="Tap to copy"></button>
+            <button class="btn btn--ghost btn--sm" id="copy-code">Copy code</button>
+          </div>
+        </div>
+
+        <hr class="hairline">
+
+        <div class="row" style="justify-content: space-between;">
+          <div class="topbar__title">Who's joined</div>
+          <div class="note" id="roster-count">0 of 3</div>
+        </div>
+        <div class="roster" id="roster"></div>
+        <p class="note">Wing Mode sessions are capped at 3 friends.</p>
+      </div>
+    </div>
+
+    <div style="padding: var(--s-4) var(--s-5) calc(var(--s-5) + env(safe-area-inset-bottom, 0px));">
+      <button class="btn btn--primary btn--block" id="start-session" disabled>Waiting for friends…</button>
+    </div>
+  </section>
+
+  <!-- ======================================================= swiping deck -->
+  <section class="screen" data-screen="swipe">
+    <header class="topbar">
+      <div>
+        <div class="wordmark">hinge</div>
+        <div class="topbar__sub" id="swipe-sub">Wing Mode · live</div>
+      </div>
+      <div class="row">
+        <span class="deck-progress" id="deck-progress"></span>
+        <button class="btn btn--quiet btn--sm" id="open-settings">⚙</button>
+        <button class="btn btn--quiet btn--sm" id="goto-review" hidden>Review</button>
+      </div>
+    </header>
+
+    <button class="wing-badge hidden" id="wing-badge">
+      <span class="wing-badge__initials" id="wing-badge-initials"></span>
+      <span class="wing-badge__text" id="wing-badge-text"></span>
+      <span class="wing-badge__chevron">›</span>
+    </button>
+
+    <div class="scroll" id="swipe-scroll">
+      <div id="swipe-profile"></div>
+    </div>
+
+    <div class="lock-status hidden" id="lock-status"></div>
+    <div class="action-bar">
+      <div class="action-ring" id="ring-pass">
+        <button class="action-btn action-btn--pass" id="btn-pass" aria-label="Pass">✕</button>
+      </div>
+      <div class="action-ring" id="ring-like">
+        <button class="action-btn action-btn--like" id="btn-like" aria-label="Like">♥</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ owner view during review -->
+  <section class="screen" data-screen="review">
+    <header class="topbar">
+      <div>
+        <div class="topbar__title">Profile Review</div>
+        <div class="topbar__sub" id="review-sub">Your friends are looking at your profile</div>
+      </div>
+      <div class="row">
+        <button class="btn btn--quiet btn--sm" id="goto-swipe" hidden>Swiping</button>
+        <button class="btn btn--dark btn--sm" id="end-session">End</button>
+      </div>
+    </header>
+
+    <div class="scroll">
+      <div id="review-profile"></div>
+    </div>
+  </section>
+
+  <!-- ================================================================ recap -->
+  <section class="screen" data-screen="recap">
+    <header class="topbar">
+      <div>
+        <div class="topbar__title">Wing Mode recap</div>
+        <div class="topbar__sub" id="recap-sub"></div>
+      </div>
+      <button class="btn btn--quiet btn--sm" data-goto="hub">Done</button>
+    </header>
+
+    <div class="scroll">
+      <div class="stack" id="recap-body"></div>
+    </div>
+  </section>
+
+  <!-- ============================================== matches + conversation -->
+  <section class="screen" data-screen="matches">
+    <header class="topbar">
+      <button class="btn btn--quiet btn--sm" id="matches-back">← Back</button>
+      <div class="topbar__title">Matches</div>
+      <span style="width: 56px;"></span>
+    </header>
+    <div class="scroll">
+      <div class="stack" id="matches-body"></div>
+    </div>
+  </section>
+
+  <section class="screen" data-screen="convo">
+    <header class="topbar">
+      <button class="btn btn--quiet btn--sm" data-goto="matches">← Back</button>
+      <div class="topbar__title" id="convo-title"></div>
+      <span style="width: 56px;"></span>
+    </header>
+    <div class="scroll">
+      <div class="convo" id="convo-body"></div>
+    </div>
+    <div class="composer">
+      <input placeholder="Send a message" id="convo-input">
+      <button class="btn btn--primary btn--sm" id="convo-send">Send</button>
+    </div>
+  </section>
+
+  <!-- =============================================================== sheet -->
+  <div class="sheet-backdrop" id="sheet-backdrop">
+    <div class="sheet" id="sheet"></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script src="/static/js/ws.js"></script>
+<script src="/static/js/profile.js"></script>
+<script src="/static/js/owner.js"></script>
+</body>
+</html>

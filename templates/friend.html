@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Hinge</title>
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/hinge.css">
+  <link rel="stylesheet" href="/static/css/friend.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪽</text></svg>">
+</head>
+<body data-code="{{ code }}">
+<script id="accounts-data" type="application/json">{{ accounts | tojson }}</script>
+<div class="app">
+
+  <!-- ================================================ sign in (demo shim) -->
+  <section class="screen is-active" data-screen="login">
+    <header class="topbar">
+      <div class="wordmark">hinge</div>
+    </header>
+    <div class="hold">
+      <h2 class="hold__title">Who's phone is this?</h2>
+      <p class="note">Pick the account you're signed in as. In the real app you'd
+      already be logged in — this is just so two phones can tell each other apart.</p>
+      <div class="stack" style="width:100%; padding: var(--s-4) 0;" id="account-list"></div>
+    </div>
+  </section>
+
+  <!-- ============================= your own profile — code button top right -->
+  <section class="screen" data-screen="home">
+    <header class="topbar">
+      <div>
+        <div class="topbar__title">Edit Profile</div>
+        <div class="topbar__sub" id="home-sub"></div>
+      </div>
+      <div class="row">
+        <!-- The join affordance: any Hinge user can enter a code from their own
+             profile and become someone's wing. -->
+        <button class="code-btn" id="open-code">🪽 Enter code</button>
+        <button class="btn btn--quiet btn--sm" id="logout">Log out</button>
+      </div>
+    </header>
+    <div class="scroll">
+      <div class="stack" style="padding-bottom:0">
+        <p class="note">Got a code from a friend? Tap <strong>Enter code</strong> above to
+        become their wing.</p>
+      </div>
+      <div id="home-profile"></div>
+    </div>
+  </section>
+
+  <!-- ============================================ Wing Mode welcome screen -->
+  <section class="screen" data-screen="welcome">
+    <header class="topbar">
+      <button class="btn btn--quiet btn--sm" id="welcome-back">← Back</button>
+      <div class="pill">🪽 Wing Mode</div>
+      <span style="width:56px"></span>
+    </header>
+    <div class="welcome">
+      <img class="welcome__photo" id="welcome-photo" alt="">
+      <h1 class="welcome__title" id="welcome-title"></h1>
+      <p class="welcome__explainer" id="welcome-explainer"></p>
+      <div>
+        <button class="btn btn--wing btn--block" id="join-button">Join Session</button>
+        <p class="welcome__as" id="welcome-as" style="margin-top: var(--s-3);"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================ joined confirmation -->
+  <section class="screen" data-screen="joined">
+    <div class="hold">
+      <div class="pulse">🪽</div>
+      <h2 class="hold__title" id="joined-title">You're in</h2>
+      <p class="note" id="joined-body"></p>
+      <div class="roster" id="joined-roster" style="width: 100%; max-width: 320px;"></div>
+    </div>
+  </section>
+
+  <!-- ============================================= swiping together (friend) -->
+  <section class="screen" data-screen="swipe">
+    <header class="topbar">
+      <div>
+        <div class="topbar__title" id="swipe-heading">Swiping together</div>
+        <div class="topbar__sub" id="swipe-privacy">Only they can see your input</div>
+      </div>
+      <div class="row" id="swipe-avatars"></div>
+    </header>
+
+    <div class="window-status" id="window-status">🪽 Decision window open — react now</div>
+
+    <div class="scroll">
+      <div id="friend-profile"></div>
+    </div>
+
+    <div class="friend-footer">You can react — only they can Like or Pass.</div>
+  </section>
+
+  <!-- ================================================ profile review (friend) -->
+  <section class="screen" data-screen="review">
+    <header class="topbar">
+      <div>
+        <div class="topbar__title" id="review-heading">Profile Review</div>
+        <div class="topbar__sub">Suggestions only — nothing goes live without them</div>
+      </div>
+      <div class="row" id="review-avatars"></div>
+    </header>
+
+    <div class="segmented" id="review-tabs">
+      <button data-tab="photos" class="is-active">Photos</button>
+      <button data-tab="order">Reorder</button>
+      <button data-tab="prompts">Prompts</button>
+    </div>
+
+    <div class="scroll">
+      <div class="stack" id="review-body"></div>
+    </div>
+  </section>
+
+  <!-- ======================================================== session end -->
+  <section class="screen" data-screen="ended">
+    <div class="hold">
+      <div class="pulse">🪽</div>
+      <h2 class="hold__title">You're a great wing</h2>
+      <p class="note" id="ended-body"></p>
+      <div id="ended-updates" class="stack" style="width: 100%; padding: 0;"></div>
+    </div>
+  </section>
+
+  <!-- ============================================================== full -->
+  <section class="screen" data-screen="full">
+    <div class="hold">
+      <div style="font-size: 2rem;">🪽</div>
+      <h2 class="hold__title" id="full-title">This session is full</h2>
+      <p class="note" id="full-body">Wing Mode sessions are capped at 3 friends.
+      Ask for an invite to the next one.</p>
+      <button class="btn btn--ghost" id="full-back">Back to my profile</button>
+    </div>
+  </section>
+
+  <!-- =============================================================== sheet -->
+  <div class="sheet-backdrop" id="sheet-backdrop">
+    <div class="sheet" id="sheet"></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script src="/static/js/ws.js"></script>
+<script src="/static/js/profile.js"></script>
+<script src="/static/js/friend.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+Sewon — Researcher, Springfield
+
+3 photos, named by slot number.
+Any of .jpg .jpeg .png .webp works. Portrait 3:4 crops best.
+
+slot  file        what it is
+----  ----------  ----------------------------------------------
+0     0.jpg       Climbing gym, Tuesdays   (not supplied yet)
+1     1.jpg       The good coffee place   (not supplied yet)
+2     2.jpg       New haircut, new me   (not supplied yet)
+
+Any slot without a file falls back to the generated character artwork.
+
+Want MORE photos? Add an entry to this profile's `photos` list in
+app/data/profiles.py first — the app renders the list defined there,
+not whatever happens to be in this folder.

@@ -1,0 +1,19 @@
+Sheshu — Brand Strategist, Springfield
+
+6 photos, named by slot number.
+Any of .jpg .jpeg .png .webp works. Portrait 3:4 crops best.
+
+slot  file        what it is
+----  ----------  ----------------------------------------------
+0     0.jpg       Mirror selfie, gym bathroom   (not supplied yet)
+1     1.jpg       I'm somewhere in this group photo   (not supplied yet)
+2     2.jpg       My coffee. Riveting.   (not supplied yet)
+3     3.jpg       Sunrise at the lookout   (not supplied yet)
+4     4.jpg       Pottery class, first attempt   (not supplied yet)
+5     5.jpg       Me and Biscuit   (not supplied yet)
+
+Any slot without a file falls back to the generated character artwork.
+
+Want MORE photos? Add an entry to this profile's `photos` list in
+app/data/profiles.py first — the app renders the list defined there,
+not whatever happens to be in this folder.

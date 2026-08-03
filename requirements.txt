@@ -1,0 +1,13 @@
+# Pinned to the versions this prototype was built and tested against.
+fastapi==0.136.1
+uvicorn[standard]==0.47.0
+jinja2==3.1.6
+
+# Listed explicitly even though uvicorn[standard] pulls it in. Without a
+# WebSocket implementation present, uvicorn answers /ws with a 404 and the whole
+# live session silently fails to connect — an easy thing to lose an hour to.
+websockets==17.0.1
+
+# Form parsing for photo uploads in Edit Profile. FastAPI raises at import time
+# if a route declares UploadFile without it.
+python-multipart==0.0.29

@@ -1,0 +1,682 @@
+/* Owner-only surfaces: entry point, invite, swiping deck, Wing Badge,
+   matches + conversation, and the recap. */
+
+/* ------------------------------------------------------- edit profile hub */
+
+.hub {
+  padding: var(--s-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+/* Wing Mode's entry point, top left of Edit Profile. Filled rather than quiet,
+   because it's the one thing on this screen we want tapped. */
+.wing-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px var(--s-4);
+  border-radius: var(--r-full);
+  background: var(--wing);
+  color: #fff;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: var(--shadow-wing);
+  transition: transform 0.12s var(--ease);
+  white-space: nowrap;
+}
+.wing-entry:active {
+  transform: scale(0.96);
+}
+
+/* ------------------------------------------------------ session type pick */
+
+.choice {
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--s-5);
+  display: flex;
+  gap: var(--s-4);
+  align-items: flex-start;
+  transition: border-color 0.14s var(--ease), background 0.14s var(--ease);
+}
+.choice.is-selected {
+  border-color: var(--wing);
+  background: var(--wing-soft);
+}
+.choice__radio {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-full);
+  border: 2px solid var(--line-strong);
+  flex: none;
+  margin-top: 2px;
+  display: grid;
+  place-items: center;
+}
+.choice.is-selected .choice__radio {
+  border-color: var(--wing);
+}
+.choice.is-selected .choice__radio::after {
+  content: "";
+  width: 11px;
+  height: 11px;
+  border-radius: var(--r-full);
+  background: var(--wing);
+}
+.choice__title {
+  font-weight: 650;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+.choice__desc {
+  font-size: var(--t-sm);
+  color: var(--ink-2);
+  margin-top: 2px;
+}
+.tag {
+  font-size: var(--t-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--wing-deep);
+  background: #fff;
+  border: 1px solid var(--wing-line);
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+}
+
+/* ------------------------------------------------------------ invite */
+
+.invite-message {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: var(--s-4);
+  font-size: var(--t-base);
+  color: var(--ink-2);
+}
+.invite-link {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--t-sm);
+  word-break: break-all;
+  color: var(--wing-deep);
+}
+
+.code-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.code-row .btn {
+  flex: none;
+  white-space: nowrap;
+}
+
+.code-display {
+  flex: 1;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--t-xl);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-indent: 0.18em; /* offset the trailing letter-space so it reads centred */
+  text-align: center;
+  padding: var(--s-4);
+  background: var(--surface);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-md);
+  color: var(--ink);
+  transition: border-color 0.14s var(--ease), background 0.14s var(--ease);
+}
+.code-display:active {
+  background: var(--surface-sunken);
+}
+.code-display.is-copied {
+  border-style: solid;
+  border-color: var(--like);
+  color: var(--like);
+}
+
+.roster {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.roster__slot {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+/* Some of these slots are <button>s, and older WebKit refuses to treat a button
+   as a flex container — the row collapses into a vertical stack. Putting the
+   flex on an inner element sidesteps that entirely. */
+.slot-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  text-align: left;
+}
+.roster__slot--empty {
+  border-style: dashed;
+  color: var(--ink-3);
+  background: transparent;
+}
+.roster__slot--filled {
+  animation: pop 0.3s var(--ease);
+}
+.avatar--empty {
+  background: var(--surface-sunken);
+  border: 1px dashed var(--line-strong);
+}
+
+/* ------------------------------------------------------------ wing badge */
+
+.wing-badge {
+  position: sticky;
+  top: 61px;
+  z-index: 18;
+  margin: var(--s-3) var(--s-4) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 10px var(--s-4);
+  background: var(--wing);
+  color: #fff;
+  border-radius: var(--r-full);
+  box-shadow: var(--shadow-wing);
+  animation: badge-in 0.34s var(--ease);
+  text-align: left;
+  width: calc(100% - 2 * var(--s-4));
+}
+@keyframes badge-in {
+  from {
+    transform: translateY(-8px) scale(0.94);
+    opacity: 0;
+  }
+}
+.wing-badge__initials {
+  display: flex;
+}
+.wing-badge__initials .avatar {
+  border: 2px solid var(--wing);
+  margin-left: -8px;
+}
+.wing-badge__initials .avatar:first-child {
+  margin-left: 0;
+}
+.wing-badge__text {
+  flex: 1;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  line-height: 1.3;
+}
+.wing-badge__chevron {
+  opacity: 0.75;
+  font-size: var(--t-md);
+}
+
+/* --------------------------------------------------------- swipe actions */
+
+.action-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 22;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-8);
+  padding: var(--s-4) var(--s-5) calc(var(--s-5) + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, var(--bg) 62%, transparent);
+}
+
+/* The lock is drawn as a ring that drains around each button. Progress comes
+   from --p (1 -> 0), written by the countdown loop in owner.js. */
+.action-ring {
+  --p: 0;
+  width: 76px;
+  height: 76px;
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+  background: conic-gradient(var(--wing) calc(var(--p) * 360deg), transparent 0);
+  transition: background 0.2s linear;
+}
+
+.action-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--r-full);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  border: 1px solid var(--line);
+  transition: transform 0.14s var(--ease);
+}
+.action-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+.action-btn:disabled {
+  opacity: 1;
+  color: var(--ink-3);
+  cursor: not-allowed;
+}
+.action-btn--like:not(:disabled) {
+  color: var(--like);
+}
+.action-btn--pass:not(:disabled) {
+  color: var(--pass);
+}
+
+.lock-status {
+  position: sticky;
+  bottom: 104px;
+  z-index: 21;
+  margin: 0 auto;
+  width: fit-content;
+  max-width: calc(100% - 40px);
+  background: rgba(23, 22, 26, 0.9);
+  color: #fff;
+  padding: 7px var(--s-4);
+  border-radius: var(--r-full);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+.lock-status--extended {
+  background: var(--wing);
+}
+
+.deck-progress {
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------- matches */
+
+.match-hero {
+  text-align: center;
+  padding: var(--s-10) var(--s-5);
+}
+.match-hero__title {
+  font-family: var(--font-display);
+  font-size: var(--t-2xl);
+  margin: var(--s-4) 0 var(--s-2);
+}
+
+.convo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-5);
+}
+.convo__header {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+}
+.convo__photo {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-full);
+  object-fit: cover;
+}
+
+/* The Wing Badge in its second placement: a ready-made opener on the
+   conversation page, owner-only and dismissible. */
+.opener-badge {
+  background: linear-gradient(150deg, var(--wing-soft), #fff);
+  border: 1px solid var(--wing-line);
+  border-radius: var(--r-lg);
+  padding: var(--s-4) var(--s-5);
+  display: flex;
+  gap: var(--s-3);
+  align-items: flex-start;
+  box-shadow: var(--shadow-sm);
+}
+.opener-badge__body {
+  flex: 1;
+}
+.opener-badge__label {
+  font-size: var(--t-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--wing-deep);
+  margin-bottom: 4px;
+}
+.opener-badge__text {
+  font-size: var(--t-base);
+  color: var(--ink);
+}
+.opener-badge__privacy {
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+  margin-top: var(--s-2);
+}
+.opener-badge__close {
+  color: var(--ink-3);
+  font-size: var(--t-md);
+  line-height: 1;
+  padding: 2px;
+}
+
+.composer {
+  display: flex;
+  gap: var(--s-2);
+  padding: var(--s-4) var(--s-5) calc(var(--s-5) + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.composer input {
+  flex: 1;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-full);
+  padding: 11px var(--s-4);
+  background: var(--bg);
+}
+.composer input:focus {
+  outline: 2px solid var(--wing);
+  outline-offset: -1px;
+}
+
+/* ----------------------------------------------------------------- recap */
+
+.recap-section__title {
+  font-size: var(--t-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  margin: var(--s-6) 0 var(--s-3);
+}
+
+.suggestion {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--s-5);
+  box-shadow: var(--shadow-sm);
+}
+.suggestion + .suggestion {
+  margin-top: var(--s-3);
+}
+.suggestion__by {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  margin-bottom: var(--s-4);
+}
+.suggestion__actions {
+  display: flex;
+  gap: var(--s-2);
+  margin-top: var(--s-4);
+}
+.suggestion.is-accepted,
+.suggestion.is-rejected {
+  opacity: 0.72;
+}
+.suggestion__resolved {
+  margin-top: var(--s-4);
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+.suggestion.is-accepted .suggestion__resolved {
+  color: var(--like);
+}
+.suggestion.is-rejected .suggestion__resolved {
+  color: var(--ink-3);
+}
+
+/* Side-by-side current vs. suggested order — one tap to accept, the owner
+   never has to drag anything themselves. */
+.order-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-4);
+}
+.order-compare__label {
+  font-size: var(--t-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+  margin-bottom: var(--s-2);
+}
+.order-compare__col--new .order-compare__label {
+  color: var(--wing-deep);
+}
+.order-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+.order-grid__cell {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--surface-sunken);
+}
+.order-grid__cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.order-grid__cell span {
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  background: rgba(23, 22, 26, 0.72);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: var(--r-full);
+}
+.order-compare__col--new .order-grid__cell:first-child {
+  box-shadow: 0 0 0 2px var(--wing);
+}
+
+.diff {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.diff__row {
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-md);
+  font-size: var(--t-sm);
+  line-height: 1.45;
+}
+.diff__row--old {
+  background: var(--surface-sunken);
+  color: var(--ink-2);
+  text-decoration: line-through;
+  text-decoration-color: var(--line-strong);
+}
+.diff__row--new {
+  background: var(--wing-soft);
+  border: 1px solid var(--wing-line);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--t-md);
+}
+
+/* Third Wing Badge placement: attribution in the profile edit view. */
+.attribution {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--s-3);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--wing-deep);
+  background: var(--wing-soft);
+  border: 1px solid var(--wing-line);
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+}
+
+/* ------------------------------------------------- edit your own profile */
+
+/* Same tile grid the friend uses to suggest an order, but here a drag applies
+   the change directly rather than proposing one. */
+.reorder-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-3);
+}
+
+.reorder-tile {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--surface-sunken);
+  cursor: grab;
+  touch-action: none; /* stop the browser scrolling instead of dragging */
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.16s var(--ease), opacity 0.16s var(--ease);
+}
+.reorder-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+.reorder-tile__index {
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  background: rgba(26, 26, 26, 0.78);
+  color: #fff;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.reorder-tile__swap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 4px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: rgba(26, 26, 26, 0.62);
+  pointer-events: none;
+}
+.reorder-tile.is-dragging {
+  opacity: 0.4;
+  transform: scale(0.94);
+}
+.reorder-tile.is-over {
+  box-shadow: 0 0 0 3px var(--wing);
+}
+
+.edit-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--s-5);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+.edit-card + .edit-card {
+  margin-top: var(--s-3);
+}
+
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.edit-field__label {
+  font-size: var(--t-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+}
+.edit-field input,
+.edit-field textarea {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  padding: 11px var(--s-3);
+  background: var(--bg);
+  font-family: inherit;
+  resize: vertical;
+}
+.edit-field textarea {
+  font-family: var(--font-display);
+  font-size: var(--t-md);
+  line-height: 1.4;
+}
+.edit-field input:focus,
+.edit-field textarea:focus {
+  outline: 2px solid var(--wing);
+  outline-offset: -1px;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--s-4) 0;
+}
+.switch {
+  width: 50px;
+  height: 30px;
+  border-radius: var(--r-full);
+  background: var(--line-strong);
+  padding: 3px;
+  flex: none;
+  transition: background 0.18s var(--ease);
+}
+.switch.is-on {
+  background: var(--wing);
+}
+.switch__dot {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-full);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.18s var(--ease);
+}
+.switch.is-on .switch__dot {
+  transform: translateX(20px);
+}

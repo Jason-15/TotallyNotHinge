@@ -1,0 +1,19 @@
+Homer — Safety Inspector, Sector 7-G, 742 Evergreen Terrace
+
+6 photos, named by slot number.
+Any of .jpg .jpeg .png .webp works. Portrait 3:4 crops best.
+
+slot  file        what it is
+----  ----------  ----------------------------------------------
+0     0.jpg       Full length, since people keep asking
+1     1.jpg       Sector 7-G. That's my desk.
+2     2.jpg       Donuts. Any donut. All donuts.
+3     3.jpg       Just another day at the plant
+4     4.jpg       In the kitchen, allegedly cooking
+5     5.jpg       Not my finest moment
+
+Any slot without a file falls back to the generated character artwork.
+
+Want MORE photos? Add an entry to this profile's `photos` list in
+app/data/profiles.py first — the app renders the list defined there,
+not whatever happens to be in this folder.

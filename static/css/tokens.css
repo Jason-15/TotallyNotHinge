@@ -1,0 +1,99 @@
+/* Hinge's real design system.
+   Sourced from the published brand guidelines: the core palette is Hinge Black
+   and Hinge White, and the guideline is explicit that "black and white should
+   always be the predominant colors and appear in at least 90% of a given space.
+   The rest of the palette should never occupy more than 10%."
+
+   So this app is monochrome by default. Midnight is reserved almost entirely
+   for Wing Mode itself — the badge, the wing affordances — which is what makes
+   the feature legible as a distinct layer without fighting the host app. */
+
+:root {
+  /* Core */
+  --black: #1a1a1a;          /* Hinge Black */
+  --white: #fffefd;          /* Hinge White */
+  --bright-white: #ffffff;   /* Bright White */
+
+  /* Extended palette — accents only, sparingly */
+  --midnight: #3e1768;
+  --aubergine: #67295f;
+  --lilac: #75457d;
+  --mauve: #9f81a5;
+  --mist: #c7c7e5;
+  --sand: #ccac9f;
+  --pebble: #eee1db;
+  --stone: #484848;
+  --forest: #025656;
+  --kelp: #097270;
+  --coral: #d45847;
+
+  /* Applied roles */
+  --bg: var(--white);
+  --surface: var(--bright-white);
+  --surface-sunken: #f4f2f0;
+  --line: #e6e3e0;
+  --line-strong: #d2cecb;
+
+  --ink: var(--black);
+  --ink-2: var(--stone);
+  --ink-3: #8c8880;
+  --ink-inverse: var(--bright-white);
+
+  /* Wing Mode's accent — the ≤10% */
+  --wing: var(--midnight);
+  --wing-deep: #2b0f4a;
+  --wing-soft: #f2eefa;
+  --wing-line: #ded2f0;
+
+  --like: var(--kelp);
+  --pass: var(--stone);
+  --alert: var(--coral);
+  --flag: var(--sand);
+
+  /* Type.
+     Hinge sets headlines in Tiempos Headline and everything functional in
+     Modern Era. Both are licensed faces we can't ship, so these are the closest
+     widely available stand-ins: a transitional serif with similar proportions,
+     and a large-x-height grotesque. */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Charter", "Bitstream Charter", "Iowan Old Style", "Palatino Linotype",
+    Palatino, Georgia, "Times New Roman", serif;
+
+  --t-xs: 0.6875rem;
+  --t-sm: 0.8125rem;
+  --t-base: 0.9375rem;
+  --t-md: 1.0625rem;
+  --t-lg: 1.375rem;
+  --t-xl: 1.75rem;
+  --t-2xl: 2.25rem;
+
+  /* Leading, per the guidelines: 110% on display, 140% on body. */
+  --lh-display: 1.1;
+  --lh-body: 1.4;
+
+  /* CTAs are Modern Era Bold, all caps, with generous tracking. */
+  --cta-tracking: 0.09em;
+
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 24px;
+  --r-full: 999px;
+
+  --shadow-sm: 0 1px 2px rgba(26, 26, 26, 0.05);
+  --shadow-md: 0 4px 16px rgba(26, 26, 26, 0.07);
+  --shadow-lg: 0 12px 40px rgba(26, 26, 26, 0.14);
+  --shadow-wing: 0 4px 14px rgba(62, 23, 104, 0.24);
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}

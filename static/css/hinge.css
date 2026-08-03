@@ -1,0 +1,613 @@
+/* Shared Hinge chrome: app frame, profile card, photos, prompts, buttons,
+   sheets and toasts. Both the owner and friend apps build on this.
+
+   The look is deliberately monochrome — Hinge's own guideline is that black and
+   white carry at least 90% of any surface. Colour appears only where Wing Mode
+   itself does. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--t-base);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* ------------------------------------------------------------------ frame */
+
+.app {
+  /* Wide enough to be comfortable on a laptop while still reading as an app
+     column rather than a web page. Only binds above this width — on a real
+     phone the viewport is narrower, so the column just fills the screen. */
+  max-width: 680px;
+  margin: 0 auto;
+  min-height: 100%;
+  background: var(--bg);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Kept just above the column width, so the frame edge only appears once there
+   is actual canvas either side of it. */
+@media (min-width: 740px) {
+  body {
+    background: #eceae7;
+  }
+  .app {
+    box-shadow: 0 0 0 1px var(--line), var(--shadow-md);
+  }
+}
+
+.screen {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.screen.is-active {
+  display: flex;
+}
+
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ----------------------------------------------------------------- topbar */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-5);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.topbar__title {
+  font-size: var(--t-md);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.topbar__sub {
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+
+/* Hinge's wordmark is a lowercase serif. */
+.wordmark {
+  font-family: var(--font-display);
+  font-size: var(--t-lg);
+  letter-spacing: -0.03em;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------- buttons */
+
+/* Per the brand guidelines, CTAs are set bold, all caps, and tracked out. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  padding: 15px var(--s-6);
+  border-radius: var(--r-full);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--cta-tracking);
+  transition: transform 0.12s var(--ease), opacity 0.12s var(--ease),
+    background 0.12s var(--ease);
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--black);
+  color: var(--ink-inverse);
+}
+.btn--wing {
+  background: var(--wing);
+  color: var(--ink-inverse);
+  box-shadow: var(--shadow-wing);
+}
+.btn--dark {
+  background: var(--black);
+  color: var(--ink-inverse);
+}
+.btn--ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1.5px solid var(--black);
+}
+/* Quiet buttons are navigation, not calls to action — no caps. */
+.btn--quiet {
+  color: var(--ink-2);
+  padding: 10px var(--s-3);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+  font-size: var(--t-sm);
+}
+/* All-caps is right for a short CTA and wrong for a long dynamic label like
+   "Start session with Jason and Julia" — this opts those back into sentence case. */
+.btn--sentence {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: var(--t-base);
+}
+.btn--block {
+  width: 100%;
+}
+.btn--sm {
+  padding: 10px var(--s-4);
+  font-size: var(--t-xs);
+}
+
+/* --------------------------------------------------------- profile card */
+
+.profile {
+  /* Tight side padding on purpose — the photo is the content here, so it gets
+     as much of the column as the card edges allow. */
+  padding: var(--s-3) var(--s-3) var(--s-10);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.profile__header {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--s-5);
+}
+
+.profile__name {
+  font-family: var(--font-display);
+  font-size: var(--t-2xl);
+  line-height: var(--lh-display);
+  letter-spacing: -0.02em;
+  margin: 0;
+  font-weight: 600;
+}
+
+.profile__meta {
+  margin-top: var(--s-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+  color: var(--ink-2);
+  font-size: var(--t-sm);
+}
+.profile__meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* A photo or a prompt. `data-target-type` / `data-target-index` are how a
+   reaction finds its way back to the exact element that was reacted to. */
+.block {
+  position: relative;
+  border-radius: var(--r-lg);
+  scroll-margin-top: 84px;
+}
+
+.block--photo {
+  overflow: hidden;
+  background: var(--surface-sunken);
+  aspect-ratio: 3 / 4;
+}
+/* Direct child only. Reaction chips sit inside this block and carry their own
+   <img> avatars — a descendant selector here stretches those to full size. */
+.block--photo > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.block--prompt {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: var(--s-6) var(--s-5);
+}
+.prompt__q {
+  font-size: var(--t-sm);
+  color: var(--ink-3);
+  margin-bottom: var(--s-3);
+}
+/* Hinge sets prompt answers in its editorial serif — it's the single most
+   recognisable thing about a Hinge profile. */
+.prompt__a {
+  font-family: var(--font-display);
+  font-size: var(--t-lg);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+/* Applied when the owner taps a Wing Badge and lands on the element. */
+.block.is-spotlit {
+  animation: spotlight 2.2s var(--ease);
+}
+@keyframes spotlight {
+  0%,
+  100% {
+    box-shadow: none;
+  }
+  15%,
+  70% {
+    box-shadow: 0 0 0 3px var(--wing);
+  }
+}
+
+/* ------------------------------------------------------------- reactions */
+
+/* On a photo the emoji stack sits bottom-right, under the margin comments, so
+   all the reaction UI lives on one side and the caption keeps the bottom-left
+   to itself. */
+.reaction-stack {
+  position: absolute;
+  right: var(--s-3);
+  bottom: var(--s-3);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+  z-index: 3;
+}
+.block--prompt .reaction-stack {
+  position: static;
+  justify-content: flex-start;
+  margin-top: var(--s-4);
+}
+
+.reaction-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 13px 5px 5px;
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: var(--r-full);
+  box-shadow: var(--shadow-md);
+  font-size: var(--t-md);
+  font-weight: 600;
+  animation: pop 0.28s var(--ease);
+}
+@keyframes pop {
+  from {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+}
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  flex: none;
+  overflow: hidden;
+  object-fit: cover;
+}
+.avatar--lg {
+  width: 46px;
+  height: 46px;
+  font-size: var(--t-base);
+}
+img.avatar {
+  display: block;
+}
+
+/* Margin comments on a photo, Google Docs style.
+   Absolutely positioned over the right edge rather than stacked underneath, so
+   a comment landing mid-session costs nothing in layout — the feed doesn't
+   reflow and the photo below doesn't jump. Being out of flow is also what lets
+   them survive the block's overflow:hidden. */
+.photo-notes {
+  position: absolute;
+  top: var(--s-3);
+  right: var(--s-3);
+  width: min(58%, 290px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  z-index: 4;
+  pointer-events: none;
+}
+
+.photo-note {
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: var(--r-md);
+  border-left: 3px solid var(--ink-3);
+  padding: var(--s-3) var(--s-4);
+  box-shadow: var(--shadow-md);
+  animation: note-in 0.3s var(--ease);
+}
+@keyframes note-in {
+  from {
+    transform: translateX(10px);
+    opacity: 0;
+  }
+}
+
+.photo-note__who {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+.photo-note__who .avatar {
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+}
+
+.photo-note__text {
+  font-size: var(--t-sm);
+  line-height: 1.45;
+  color: var(--ink-2);
+  /* Long comments truncate rather than growing a card tall enough to cover the
+     face underneath. */
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.photo-note--more {
+  font-size: var(--t-sm);
+  font-weight: 700;
+  color: var(--ink-2);
+  border-left-color: var(--line-strong);
+  text-align: center;
+}
+
+.reaction-note {
+  margin-top: var(--s-2);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--ink-3);
+  border-radius: var(--r-sm);
+  padding: var(--s-4) var(--s-4);
+  font-size: var(--t-base);
+  color: var(--ink-2);
+}
+.reaction-note strong {
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------ structure */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-6) var(--s-5);
+}
+
+.note {
+  font-size: var(--t-sm);
+  color: var(--ink-2);
+}
+
+.hairline {
+  height: 1px;
+  background: var(--line);
+  border: 0;
+  margin: 0;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--r-full);
+  background: var(--wing-soft);
+  color: var(--wing);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* --------------------------------------------------------------- sheets */
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 26, 26, 0.45);
+  z-index: 60;
+  display: none;
+}
+.sheet-backdrop.is-open {
+  display: block;
+}
+
+.sheet {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: 100%;
+  max-width: 680px; /* must track .app, or the sheet sits narrower than the column */
+  background: var(--surface);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  padding: var(--s-5) var(--s-5) var(--s-8);
+  box-shadow: var(--shadow-lg);
+  animation: sheet-up 0.26s var(--ease);
+  max-height: 88vh;
+  overflow-y: auto;
+}
+@keyframes sheet-up {
+  from {
+    transform: translate(-50%, 100%);
+  }
+}
+.sheet__grip {
+  width: 40px;
+  height: 4px;
+  background: var(--line-strong);
+  border-radius: var(--r-full);
+  margin: 0 auto var(--s-5);
+}
+.sheet__title {
+  font-family: var(--font-display);
+  font-size: var(--t-lg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--s-4);
+}
+
+/* --------------------------------------------------------------- toasts */
+
+.toasts {
+  position: fixed;
+  top: var(--s-4);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(420px, calc(100% - 32px));
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--black);
+  color: #fff;
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-md);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  animation: toast-in 0.3s var(--ease);
+}
+.toast--wing {
+  background: var(--wing);
+}
+@keyframes toast-in {
+  from {
+    transform: translateY(-12px);
+    opacity: 0;
+  }
+}
+.toast.is-out {
+  animation: toast-out 0.3s var(--ease) forwards;
+}
+@keyframes toast-out {
+  to {
+    transform: translateY(-12px);
+    opacity: 0;
+  }
+}
+
+/* ------------------------------------------------------------ utilities */
+
+.hidden {
+  display: none !important;
+}
+.center {
+  text-align: center;
+}
+.grow {
+  flex: 1;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.muted {
+  color: var(--ink-3);
+}
+
+/* The join-by-code affordance that lives in the top right of a profile. */
+.code-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--r-full);
+  border: 1.5px solid var(--wing);
+  color: var(--wing);
+  background: var(--wing-soft);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  flex: none;
+}
+.code-btn:active {
+  transform: scale(0.97);
+}
+
+.code-input {
+  width: 100%;
+  text-align: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--t-xl);
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-indent: 0.24em;
+  padding: var(--s-4);
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+  text-transform: uppercase;
+}
+.code-input:focus {
+  outline: none;
+  border-color: var(--wing);
+  background: var(--surface);
+}

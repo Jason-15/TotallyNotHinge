@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>WingMode — Hinge prototype</title>
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/hinge.css">
+  <link rel="stylesheet" href="/static/css/owner.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪽</text></svg>">
+</head>
+<body>
+  <div class="app">
+    <div class="screen is-active">
+      <div class="scroll">
+        <div class="stack" style="padding-top: var(--s-10); gap: var(--s-6);">
+
+          <div class="center">
+            <div style="font-size: 2.5rem;">🪽</div>
+            <h1 class="wordmark" style="font-size: var(--t-2xl); margin: var(--s-3) 0 var(--s-2);">Wing Mode</h1>
+            <p class="note" style="max-width: 30ch; margin: 0 auto;">
+              A Hinge prototype. Bring your friends into the two moments that matter most —
+              building your profile, and deciding who to Like.
+            </p>
+          </div>
+
+          {% if error %}
+          <div class="invite-message" style="border-color: var(--alert); color: var(--alert);">{{ error }}</div>
+          {% endif %}
+
+          <hr class="hairline">
+
+          <div>
+            <div class="pill" style="margin-bottom: var(--s-3);">Start here</div>
+            <button class="btn btn--primary btn--block" id="start-owner">Open Hinge as Sheshu</button>
+            <p class="note" style="margin-top: var(--s-3);">
+              You'll land in Sheshu's profile, where Wing Mode lives. Start a session, then send the
+              invite link to the two people playing their friends.
+            </p>
+          </div>
+
+          <hr class="hairline">
+
+          <div>
+            <div class="pill" style="margin-bottom: var(--s-3);">On the other phones</div>
+            <a class="btn btn--ghost btn--block" href="/friend" style="text-decoration:none">Open Hinge as a friend</a>
+            <p class="note" style="margin-top: var(--s-3);">
+              Sign in as Jason or Julia, then tap <strong>Enter code</strong> in the top right
+              of your own profile to become Sheshu's wing. Tapping their invite link works too.
+            </p>
+          </div>
+
+          <hr class="hairline">
+
+          <p class="note center" style="color: var(--ink-3);">
+            Prototype for demo purposes. Characters and artwork are stand-ins.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('start-owner').addEventListener('click', async (event) => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      button.textContent = 'Opening…';
+      const response = await fetch('/api/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_type: 'both' })
+      });
+      const data = await response.json();
+      window.location.href = data.owner_url;
+    });
+
+  </script>
+</body>
+</html>

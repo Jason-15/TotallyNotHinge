@@ -1,0 +1,19 @@
+Ned — Owner, The Leftorium, 744 Evergreen Terrace
+
+6 photos, named by slot number.
+Any of .jpg .jpeg .png .webp works. Portrait 3:4 crops best.
+
+slot  file        what it is
+----  ----------  ----------------------------------------------
+0     0.jpg       Out front, saying hi-diddly-ho
+1     1.jpg       The moustache and I
+2     2.jpg       Sunday best
+3     3.jpg       Waving at absolutely everyone
+4     4.jpg       Leaning over the fence again
+5     5.jpg       Choir practice
+
+Any slot without a file falls back to the generated character artwork.
+
+Want MORE photos? Add an entry to this profile's `photos` list in
+app/data/profiles.py first — the app renders the list defined there,
+not whatever happens to be in this folder.
