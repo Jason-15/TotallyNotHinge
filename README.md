@@ -21,7 +21,7 @@ served by FastAPI.
 
 | Who | Role | Opens |
 |-----|------|-------|
-| **Sheshu** | Account owner — swipes, and gets their profile reviewed | `/` → "Open Hinge as Sheshu" |
+| **Sheshu** | Account owner |
 | **Jason** | Wing | `/friend` |
 | **Julia** | Wing | `/friend` |
 | **Sewon** | Wing (third seat) | `/friend` |
@@ -33,8 +33,4 @@ sign in, and enter the session code from the top right of their own profile.
 
 ## Deploying
 
-Push to GitHub and point Railway at the repo. `Procfile` and `railway.json` handle the rest.
-
-**Keep it on a single replica.** Sessions are held in memory, so a second replica would
-hold half of them and the app would look broken. `numReplicas: 1` is already set in
-`railway.json`. A redeploy clears every live session — start a fresh one before demoing.
+Deploying this to railway, added a proc file so should be pretty easy lol
