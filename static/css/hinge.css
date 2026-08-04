@@ -50,11 +50,17 @@ textarea {
      phone the viewport is narrower, so the column just fills the screen. */
   max-width: 680px;
   margin: 0 auto;
-  min-height: 100%;
   background: var(--bg);
   position: relative;
   display: flex;
   flex-direction: column;
+  /* Pinned to the viewport so the only thing that scrolls is .scroll. When the
+     shell was free to grow, the page itself scrolled, the sticky tab bar rode
+     the viewport, and it painted straight over the swipe buttons. dvh tracks
+     mobile browser chrome as it hides and shows. */
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 /* Kept just above the column width, so the frame edge only appears once there
@@ -82,6 +88,171 @@ textarea {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+/* --------------------------------------------------------------- tab bar */
+
+/* Hinge's black bottom bar. Sits outside the screens so it persists across
+   navigation, and is hidden on the pre-session screens (sign in, welcome). */
+.tabbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: #0d0d0d;
+  padding: var(--s-4) var(--s-5) calc(var(--s-4) + env(safe-area-inset-bottom, 0px));
+  z-index: 30;
+  flex: none;
+}
+.tabbar[hidden] {
+  display: none;
+}
+
+.tabbar__item {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-full);
+  color: #8a8a8a;
+  transition: color 0.14s var(--ease), transform 0.12s var(--ease);
+}
+.tabbar__item:active:not(:disabled) {
+  transform: scale(0.9);
+}
+.tabbar__item.is-active {
+  color: #ffffff;
+}
+/* Likes and Messages are shown for fidelity but do nothing — this is a Wing
+   Mode prototype, not a whole dating app. */
+.tabbar__item:disabled {
+  color: #5a5a5a;
+  cursor: default;
+}
+
+.tabbar__h {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1;
+}
+/* The wordmark sets its own colour, so it has to opt back out when the tab is
+   disabled — otherwise it stays bright white and still looks tappable. */
+.tabbar__item:disabled .tabbar__h {
+  color: #5a5a5a;
+}
+
+.tabbar__wing {
+  font-size: 1.25rem;
+  line-height: 1;
+  /* The emoji is full-colour; dim it when the tab isn't the active one. */
+  filter: grayscale(1) brightness(1.7);
+  opacity: 0.72;
+  transition: filter 0.14s var(--ease), opacity 0.14s var(--ease);
+}
+.tabbar__item.is-active .tabbar__wing {
+  filter: none;
+  opacity: 1;
+}
+
+.tabbar__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-full);
+  object-fit: cover;
+  border: 1.5px solid #5a5a5a;
+  transition: border-color 0.14s var(--ease);
+}
+.tabbar__item.is-active .tabbar__avatar {
+  border-color: #ffffff;
+}
+
+/* ------------------------------------------------------------ screen bar */
+
+/* The header is the same everywhere — wordmark left, log out right — so
+   per-screen context and controls live in this strip underneath it instead. */
+.screen-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-5);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+.screen-bar__title {
+  font-size: var(--t-sm);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.screen-bar__sub {
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+.screen-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: none;
+}
+
+/* ------------------------------------------------------ segmented tabs */
+
+/* Shared by the friend's Photos / Reorder / Prompts switcher and the owner's
+   Edit / View tabs. Lived in friend.css until the owner needed it too, which
+   left the owner's tabs completely unstyled. */
+.segmented {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  background: var(--surface-sunken);
+  border-radius: var(--r-full);
+  margin: var(--s-4) var(--s-5) 0;
+}
+.segmented button {
+  flex: 1;
+  padding: 9px;
+  border-radius: var(--r-full);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--ink-2);
+  transition: background 0.16s var(--ease), color 0.16s var(--ease);
+}
+.segmented button.is-active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ------------------------------------------------------------- info card */
+
+/* The tinted explainer blocks used to set expectations on a screen — what this
+   tab is for, and what it does or doesn't publish. */
+.info-card {
+  background: var(--info-tint);
+  border-radius: var(--r-lg);
+  padding: var(--s-6);
+}
+.info-card__title {
+  font-family: var(--font-display);
+  font-size: var(--t-lg);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--s-3);
+}
+.info-card__body {
+  font-size: var(--t-base);
+  color: var(--ink-2);
+  line-height: 1.45;
+  margin: 0;
+}
+.info-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  margin-top: var(--s-5);
 }
 
 /* ----------------------------------------------------------------- topbar */
@@ -237,7 +408,10 @@ textarea {
 .block--photo {
   overflow: hidden;
   background: var(--surface-sunken);
-  aspect-ratio: 3 / 4;
+  /* 30% shorter than a 3:4 portrait (4 → 2.8). Full-height portraits ate the
+     whole viewport on a laptop, so you couldn't see a photo and the prompt
+     under it at the same time. object-fit keeps the crop centred. */
+  aspect-ratio: 3 / 2.8;
 }
 /* Direct child only. Reaction chips sit inside this block and carry their own
    <img> avatars — a descendant selector here stretches those to full size. */
@@ -246,6 +420,33 @@ textarea {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /* Source photos are 3:4 but the frame is shorter, so cover has to crop. A
+     centred crop takes equally from the top and bottom and tends to slice off
+     heads; biasing upward keeps the face and loses the floor instead. */
+  object-position: center 32%;
+}
+
+/* Hinge's photo prompt, shown under the image rather than burned across it —
+   text over a face is exactly what a caption shouldn't do. It shares a border
+   with the photo and squares off the join, so the two read as one object rather
+   than a picture with a stray line of text beneath it. */
+.photo-caption {
+  margin-top: 0;
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--line);
+  border-top: none;
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+  background: var(--surface);
+  text-align: center;
+  font-size: var(--t-base);
+  font-weight: 650;
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+/* Only square off the bottom of a photo that actually has one attached. */
+.block--photo.is-captioned {
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
 }
 
 .block--prompt {

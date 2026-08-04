@@ -231,15 +231,19 @@
 /* --------------------------------------------------------- swipe actions */
 
 .action-bar {
-  position: sticky;
-  bottom: 0;
+  /* Sits at the foot of the screen, above the tab bar, in normal flow. It used
+     to be sticky, which put it in the tab bar's lane and got it clipped. */
+  position: relative;
   z-index: 22;
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--s-8);
   padding: var(--s-4) var(--s-5) calc(var(--s-5) + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(to top, var(--bg) 62%, transparent);
+  /* No fill: the buttons carry their own, and a solid strip read as a white
+     block sitting between the photo and the tab bar. */
+  background: transparent;
 }
 
 /* The lock is drawn as a ring that drains around each button. Progress comes
@@ -283,9 +287,9 @@
 }
 
 .lock-status {
-  position: sticky;
-  bottom: 104px;
+  position: relative;
   z-index: 21;
+  flex: none;
   margin: 0 auto;
   width: fit-content;
   max-width: calc(100% - 40px);
@@ -619,10 +623,11 @@
   }
 }
 
-/* Sticky so Save is reachable without scrolling to the bottom of the form. */
+/* Always visible at the foot of the screen, so Save is reachable without
+   scrolling to the bottom of the form. */
 .edit-footer {
-  position: sticky;
-  bottom: 0;
+  position: relative;
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;

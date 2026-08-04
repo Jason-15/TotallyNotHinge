@@ -15,6 +15,13 @@
 
   const storageKey = () => `wingmode:${code}`;
 
+  /* Per-tab, not per-browser. localStorage is shared across every tab, so the
+     moment one tab signed in as Jason the others silently became Jason too —
+     which made it look like Julia and Sewon didn't exist. sessionStorage is
+     scoped to the tab, so three tabs on one laptop can be three different
+     wings, and it still survives a reload. */
+  const ACCOUNT_KEY = 'wingmode:account';
+
   let state = null;
   let reviewTab = 'photos';
   let draftOrder = null;       // local photo ordering while dragging
@@ -46,7 +53,7 @@
     $('account-list').querySelectorAll('[data-account]').forEach((node) => {
       node.addEventListener('click', () => {
         account = ACCOUNTS.find((a) => a.id === node.dataset.account);
-        localStorage.setItem('wingmode:account', account.id);
+        sessionStorage.setItem(ACCOUNT_KEY, account.id);
         afterLogin();
       });
     });
@@ -66,11 +73,12 @@
     WM.showScreen('home');
     $('home-sub').textContent = `${account.name} · ${account.location}`;
     ProfileView.render($('home-profile'), account, {});
+    renderTabbar();
   }
 
   /* ------------------------------------------------------ join by code */
 
-  $('open-code').addEventListener('click', () => {
+  function openCodeEntry() {
     WM.openCodeSheet({
       onSubmit: async (entered, errorEl) => {
         const response = await fetch(`/api/session/${entered}/preview`);
@@ -83,7 +91,7 @@
         loadWelcome(await response.json());
       }
     });
-  });
+  }
 
   $('welcome-back').addEventListener('click', () => {
     if (account) renderHome();
@@ -161,7 +169,7 @@
   /* Signing out forgets which account this phone is, and leaves any session
      it had joined — otherwise the next person to pick up the phone inherits
      the previous demo run. */
-  $('logout').addEventListener('click', () => {
+  function openLogout() {
     const sheet = WM.openSheet(`
       <h3 class="sheet__title">Log out?</h3>
       <p class="note">You'll be asked whose phone this is again, and you'll leave
@@ -173,10 +181,14 @@
     `);
     sheet.querySelector('#logout-cancel').addEventListener('click', WM.closeSheet);
     sheet.querySelector('#logout-confirm').addEventListener('click', () => {
-      localStorage.removeItem('wingmode:account');
+      sessionStorage.removeItem(ACCOUNT_KEY);
       if (code) sessionStorage.removeItem(storageKey());
       window.location.href = '/friend';
     });
+  }
+
+  document.addEventListener('click', (event) => {
+    if (event.target.closest('.js-logout')) openLogout();
   });
 
   /* ----------------------------------------------------------- reactions */
@@ -361,8 +373,11 @@
     );
 
     host.innerHTML = `
-      <p class="note">Drag ${WM.esc(profile.name)}'s photos into the order you'd put them in.
-      Your suggestion goes to them as a one-tap accept — they never have to drag anything.</p>
+      <div class="info-card">
+        <h3 class="info-card__title">Suggest a better way to reorder</h3>
+        <p class="info-card__body">Drag ${WM.esc(profile.name)}'s photos into the order you'd
+        put them in. They get it as a one-tap accept — they never have to drag anything.</p>
+      </div>
       <div class="reorder-grid" id="reorder-grid"></div>
       <button class="btn btn--primary btn--block" id="submit-order">
         ${mine ? 'Update my suggested order' : 'Suggest this order'}
@@ -451,7 +466,11 @@
     );
 
     host.innerHTML =
-      `<p class="note">Flag a prompt that could be stronger, and write what you'd say instead.</p>` +
+      `<div class="info-card">
+        <h3 class="info-card__title">Suggestions only, nothing is live yet</h3>
+        <p class="info-card__body">Flag a prompt that could be stronger, and write what you'd
+        say instead. ${WM.esc(profile.name)} approves every change before it goes on their profile.</p>
+      </div>` +
       profile.prompts
         .map((prompt, index) => {
           const sent = mine.filter((s) => s.prompt_index === index);
@@ -555,11 +574,73 @@
 
   function renderEnded() {
     $('ended-body').textContent = `${state.owner.name} will review your suggestions soon.`;
+    // Their seat is kept, so the same code gets them back in rather than
+    // burning one of the three slots on a second person.
+    $('ended-rejoin').textContent =
+      `You can come back to this session any time with code ${state.code}.`;
   }
+
+  /* ----------------------------------------------------------- tab bar */
+
+  /* Only once this phone is signed in. The sign-in, welcome and end screens are
+     one-way steps, so a persistent nav on them would be a trapdoor. */
+  const TABBAR_SCREENS = ['home', 'swipe', 'review', 'ended'];
+
+  function renderTabbar() {
+    const screen = WM.currentScreen();
+    const bar = $('tabbar');
+    bar.hidden = !TABBAR_SCREENS.includes(screen) || !account;
+    if (bar.hidden) return;
+
+    const avatar = $('tabbar-avatar');
+    const src = `/img/${account.id}/0`;
+    if (avatar.getAttribute('src') !== src) avatar.src = src;
+
+    const active = screen === 'home' ? 'home' : 'wing';
+    bar.querySelectorAll('[data-tab-to]').forEach((item) => {
+      item.classList.toggle('is-active', item.dataset.tabTo === active);
+    });
+  }
+
+  $('tabbar').addEventListener('click', (event) => {
+    const item = event.target.closest('[data-tab-to]');
+    if (!item || item.disabled) return;
+    const to = item.dataset.tabTo;
+
+    if (to === 'home') {
+      WM.showScreen('home');
+      renderHome();
+      renderTabbar();
+      return;
+    }
+
+    // A friend has no deck of their own, so both H and 🪽 lead to the session.
+    // Not in one yet? Then this is how you get in — the 🪽 tab is the join
+    // affordance now that it sits on every screen.
+    if (!participantId) {
+      openCodeEntry();
+      return;
+    }
+    if (!state || state.status !== 'active') {
+      WM.toast('Hang tight — the session hasn’t started yet.');
+      return;
+    }
+    WM.showScreen(state.mode === 'review' ? 'review' : 'swipe');
+    route();
+  });
+
+  /* Leaving keeps this phone's seat in the session — sessionStorage still holds
+     the participant id — so re-entering the code returns them as themselves
+     rather than as a new wing. */
+  $('ended-back').addEventListener('click', () => {
+    if (account) renderHome();
+    else WM.showScreen('login');
+  });
 
   /* ------------------------------------------------------------- routing */
 
   function route() {
+    renderTabbar();
     if (!state) return;
     if (state.status === 'waiting') {
       WM.showScreen('joined');
@@ -656,7 +737,7 @@
 
   /* ---------------------------------------------------------------- boot */
 
-  const remembered = localStorage.getItem('wingmode:account');
+  const remembered = sessionStorage.getItem(ACCOUNT_KEY);
   account = ACCOUNTS.find((a) => a.id === remembered) || null;
   participantId = code ? sessionStorage.getItem(storageKey()) : null;
 

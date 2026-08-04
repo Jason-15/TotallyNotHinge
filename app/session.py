@@ -38,6 +38,9 @@ FRIEND_PERSONAS = [
     {"name": "Julia", "accent": "#D45847", "photo_id": "julia"},
     # Third seat exists so the 3-friend cap can be demonstrated.
     {"name": "Sewon", "accent": "#75457D", "photo_id": "sewon"},
+    # A fourth account to sign in as, not a fourth seat — MAX_FRIENDS is still 3,
+    # so whoever gets there first takes the last place.
+    {"name": "Hinge Team", "accent": "#67295F", "photo_id": "hingeteam"},
 ]
 
 EMOJI_CHOICES = ["🔥", "👀", "❤️", "😬"]

@@ -12,49 +12,86 @@
 <body data-code="{{ code }}" data-participant="{{ participant_id }}">
 <div class="app">
 
-  <!-- ============================ Edit Profile hub — Wing Mode's entry point -->
-  <section class="screen is-active" data-screen="hub">
-    <header class="topbar">
-      <!-- Wing Mode's entry point: top left, one tap into the flow. -->
-      <button class="wing-entry" id="open-wing-mode">🪽 Wing Mode</button>
-      <div class="row">
-        <button class="btn btn--quiet btn--sm" data-goto="recap" id="hub-recap-link" hidden>Recap</button>
-        <!-- Same affordance every Hinge user has: enter a code, become a wing. -->
-        <button class="code-btn" id="open-code">Enter code</button>
-        <button class="btn btn--quiet btn--sm" id="logout">Log out</button>
-      </div>
+  <!-- ==================================== Wing Mode — start or join a session -->
+  <!-- The 🪽 tab lands here. Two ways in, because being someone's wing is as
+       ordinary an action as asking for one. -->
+  <section class="screen is-active" data-screen="wing">
+        <header class="topbar">
+      <div class="wordmark">hinge</div>
+      <button class="btn btn--quiet btn--sm js-logout">Log out</button>
     </header>
 
+    <div class="screen-bar">
+      <div><div class="screen-bar__title">Wing Mode</div></div>
+    </div>
+
     <div class="scroll">
-      <div class="hub">
-        <div>
-          <div class="topbar__title">Edit Profile</div>
-          <div class="note" id="hub-sub"></div>
+      <div class="stack">
+        <div class="center" style="padding: var(--s-6) 0 var(--s-2);">
+          <div style="font-size: 2.25rem;">🪽</div>
+          <p class="note" style="max-width: 30ch; margin: var(--s-3) auto 0;">
+            Bring friends into the two moments that matter — building your profile,
+            and deciding who to Like.
+          </p>
         </div>
 
-        <hr class="hairline">
-        <div class="row" style="justify-content: space-between;">
-          <div>
-            <div class="topbar__title">Your profile</div>
-            <div class="note" id="hub-live-note">This is what matches see</div>
-          </div>
-          <button class="btn btn--ghost btn--sm" data-goto="edit">Edit</button>
-        </div>
-        <div id="hub-profile"></div>
+        <button class="choice" id="wing-start">
+          <span class="choice__radio" style="border:none; background: var(--wing); color:#fff;">🪽</span>
+          <span>
+            <span class="choice__title">Start a session</span>
+            <span class="choice__desc">Invite up to 3 friends to review your profile and swipe with you.</span>
+          </span>
+        </button>
+
+        <button class="choice" id="wing-join">
+          <span class="choice__radio" style="border:none; background: var(--black); color:#fff;">#</span>
+          <span>
+            <span class="choice__title">Join a session</span>
+            <span class="choice__desc">Got a code from a friend? Be their wing.</span>
+          </span>
+        </button>
+
+        <button class="btn btn--quiet btn--block" data-goto="recap" id="wing-recap-link" hidden>
+          See your last recap
+        </button>
       </div>
     </div>
   </section>
 
   <!-- ===================================== the owner editing their own profile -->
   <section class="screen" data-screen="edit">
-    <header class="topbar">
-      <button class="btn btn--quiet btn--sm" data-goto="hub">← Done</button>
-      <div class="topbar__title">Edit Profile</div>
-      <span style="width: 56px;"></span>
+        <header class="topbar">
+      <div class="wordmark">hinge</div>
+      <button class="btn btn--quiet btn--sm js-logout">Log out</button>
     </header>
 
-    <div class="scroll">
+    <div class="screen-bar">
+      <div><div class="screen-bar__title">My profile</div></div>
+    </div>
+
+    <!-- Edit is the working view; View is the profile exactly as a match sees
+         it, so you can check your change before leaving the screen. -->
+    <div class="segmented" id="edit-tabs">
+      <button data-edit-tab="edit" class="is-active">Edit</button>
+      <button data-edit-tab="view">View</button>
+    </div>
+
+    <div class="scroll" id="edit-view-pane" hidden>
+      <div id="edit-preview"></div>
+    </div>
+
+    <div class="scroll" id="edit-edit-pane">
       <div class="stack">
+        <div class="info-card">
+          <h3 class="info-card__title">Let your friends do the talking</h3>
+          <p class="info-card__body">Invite friends to react to your photos and prompts.
+          You pick what actually changes.</p>
+          <div class="info-card__actions">
+            <button class="btn btn--ghost btn--sm" id="edit-share-link">Share link</button>
+            <button class="btn btn--quiet btn--sm" id="edit-dismiss-card">Dismiss</button>
+          </div>
+        </div>
+
         <div class="recap-section__title" style="margin-top: 0;">Photos</div>
         <p class="note">Drag to reorder. Tap any photo to swap in a new one.</p>
         <div class="reorder-grid" id="edit-photos"></div>
@@ -76,7 +113,7 @@
     <!-- Edits already save on blur, but with no button it's impossible to tell
          whether they stuck. This flushes whatever field is still focused and
          confirms, so there's a definite end to editing. -->
-    <div class="edit-footer">
+    <div class="edit-footer" id="edit-footer">
       <span class="edit-status" id="edit-status">All changes saved</span>
       <button class="btn btn--primary" id="edit-save">Save</button>
     </div>
@@ -84,11 +121,17 @@
 
   <!-- ================================================ session type picker -->
   <section class="screen" data-screen="type">
-    <header class="topbar">
-      <button class="btn btn--quiet btn--sm" data-goto="hub">← Back</button>
-      <div class="topbar__title">Wing Mode</div>
-      <span style="width: 56px;"></span>
+        <header class="topbar">
+      <div class="wordmark">hinge</div>
+      <button class="btn btn--quiet btn--sm js-logout">Log out</button>
     </header>
+
+    <div class="screen-bar">
+      <div><div class="screen-bar__title">Wing Mode</div></div>
+      <div class="screen-bar__actions">
+        <button class="btn btn--quiet btn--sm" data-goto="wing">← Back</button>
+      </div>
+    </div>
 
     <div class="scroll">
       <div class="stack">
@@ -130,11 +173,17 @@
 
   <!-- ========================================== invite + live waiting room -->
   <section class="screen" data-screen="invite">
-    <header class="topbar">
-      <button class="btn btn--quiet btn--sm" data-goto="type">← Back</button>
-      <div class="topbar__title">Invite your wings</div>
-      <span style="width: 56px;"></span>
+        <header class="topbar">
+      <div class="wordmark">hinge</div>
+      <button class="btn btn--quiet btn--sm js-logout">Log out</button>
     </header>
+
+    <div class="screen-bar">
+      <div><div class="screen-bar__title">Invite your wings</div></div>
+      <div class="screen-bar__actions">
+        <button class="btn btn--quiet btn--sm" data-goto="type">← Back</button>
+      </div>
+    </div>
 
     <div class="scroll">
       <div class="stack">
@@ -176,17 +225,22 @@
 
   <!-- ======================================================= swiping deck -->
   <section class="screen" data-screen="swipe">
-    <header class="topbar">
-      <div>
-        <div class="wordmark">hinge</div>
-        <div class="topbar__sub" id="swipe-sub">Wing Mode · live</div>
-      </div>
-      <div class="row">
-        <span class="deck-progress" id="deck-progress"></span>
-        <button class="btn btn--quiet btn--sm" id="open-settings">⚙</button>
-        <button class="btn btn--quiet btn--sm" id="goto-review" hidden>Review</button>
-      </div>
+        <header class="topbar">
+      <div class="wordmark">hinge</div>
+      <button class="btn btn--quiet btn--sm js-logout">Log out</button>
     </header>
+
+    <div class="screen-bar">
+      <div>
+        <div class="screen-bar__title">Swiping together</div>
+        <div class="screen-bar__sub" id="swipe-sub"></div>
+      </div>
+      <div class="screen-bar__actions">
+        <span class="deck-progress" id="deck-progress"></span>
+        <button class="btn btn--quiet btn--sm" id="goto-review" hidden>Review</button>
+        <button class="btn btn--quiet btn--sm" id="open-settings">⚙</button>
+      </div>
+    </div>
 
     <button class="wing-badge hidden" id="wing-badge">
       <span class="wing-badge__initials" id="wing-badge-initials"></span>
@@ -211,31 +265,48 @@
 
   <!-- ============================================ owner view during review -->
   <section class="screen" data-screen="review">
-    <header class="topbar">
+        <header class="topbar">
+      <div class="wordmark">hinge</div>
+      <button class="btn btn--quiet btn--sm js-logout">Log out</button>
+    </header>
+
+    <div class="screen-bar">
       <div>
-        <div class="topbar__title">Profile Review</div>
-        <div class="topbar__sub" id="review-sub">Your friends are looking at your profile</div>
+        <div class="screen-bar__title">Profile Review</div>
+        <div class="screen-bar__sub" id="review-sub"></div>
       </div>
-      <div class="row">
+      <div class="screen-bar__actions">
+        <span class="pill" id="review-count" hidden></span>
         <button class="btn btn--quiet btn--sm" id="goto-swipe" hidden>Swiping</button>
         <button class="btn btn--dark btn--sm" id="end-session">End</button>
       </div>
-    </header>
+    </div>
 
     <div class="scroll">
+      <!-- Suggestions land here as friends make them, actionable straight away.
+           The recap at session end catches anything left unactioned. -->
+      <div class="stack" id="review-suggestions"></div>
+      <hr class="hairline">
       <div id="review-profile"></div>
     </div>
   </section>
 
   <!-- ================================================================ recap -->
   <section class="screen" data-screen="recap">
-    <header class="topbar">
-      <div>
-        <div class="topbar__title">Wing Mode recap</div>
-        <div class="topbar__sub" id="recap-sub"></div>
-      </div>
-      <button class="btn btn--quiet btn--sm" data-goto="hub">Done</button>
+        <header class="topbar">
+      <div class="wordmark">hinge</div>
+      <button class="btn btn--quiet btn--sm js-logout">Log out</button>
     </header>
+
+    <div class="screen-bar">
+      <div>
+        <div class="screen-bar__title">Wing Mode recap</div>
+        <div class="screen-bar__sub" id="recap-sub"></div>
+      </div>
+      <div class="screen-bar__actions">
+        <button class="btn btn--quiet btn--sm" data-goto="wing">Done</button>
+      </div>
+    </div>
 
     <div class="scroll">
       <div class="stack" id="recap-body"></div>
@@ -244,22 +315,34 @@
 
   <!-- ============================================== matches + conversation -->
   <section class="screen" data-screen="matches">
-    <header class="topbar">
-      <button class="btn btn--quiet btn--sm" id="matches-back">← Back</button>
-      <div class="topbar__title">Matches</div>
-      <span style="width: 56px;"></span>
+        <header class="topbar">
+      <div class="wordmark">hinge</div>
+      <button class="btn btn--quiet btn--sm js-logout">Log out</button>
     </header>
+
+    <div class="screen-bar">
+      <div><div class="screen-bar__title">Matches</div></div>
+      <div class="screen-bar__actions">
+        <button class="btn btn--quiet btn--sm" id="matches-back">← Back</button>
+      </div>
+    </div>
     <div class="scroll">
       <div class="stack" id="matches-body"></div>
     </div>
   </section>
 
   <section class="screen" data-screen="convo">
-    <header class="topbar">
-      <button class="btn btn--quiet btn--sm" data-goto="matches">← Back</button>
-      <div class="topbar__title" id="convo-title"></div>
-      <span style="width: 56px;"></span>
+        <header class="topbar">
+      <div class="wordmark">hinge</div>
+      <button class="btn btn--quiet btn--sm js-logout">Log out</button>
     </header>
+
+    <div class="screen-bar">
+      <div><div class="screen-bar__title" id="convo-title"></div></div>
+      <div class="screen-bar__actions">
+        <button class="btn btn--quiet btn--sm" data-goto="matches">← Back</button>
+      </div>
+    </div>
     <div class="scroll">
       <div class="convo" id="convo-body"></div>
     </div>
@@ -268,6 +351,32 @@
       <button class="btn btn--primary btn--sm" id="convo-send">Send</button>
     </div>
   </section>
+
+  <!-- ============================================== Hinge black tab bar -->
+  <!-- Outside the screens so it persists across navigation. -->
+  <nav class="tabbar" id="tabbar" hidden>
+    <button class="tabbar__item" data-tab-to="swipe" title="Discover">
+      <span class="tabbar__h">H</span>
+    </button>
+    <button class="tabbar__item" data-tab-to="invite" title="Wing Mode">
+      <span class="tabbar__wing">🪽</span>
+    </button>
+    <button class="tabbar__item" disabled title="Likes (not in this prototype)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+        <path d="M12 20.5s-7.5-4.7-7.5-10a4.3 4.3 0 0 1 7.5-2.8A4.3 4.3 0 0 1 19.5 10c0 5.3-7.5 10.5-7.5 10.5Z"/>
+      </svg>
+    </button>
+    <button class="tabbar__item" disabled title="Messages (not in this prototype)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+        <path d="M4 5h16v11H8l-4 3.5V5Z" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <!-- Lands on the tabbed profile screen — Edit | View is what you expect to
+         see when you tap your own avatar. -->
+    <button class="tabbar__item" data-tab-to="edit" title="My profile">
+      <img class="tabbar__avatar" id="tabbar-avatar" alt="">
+    </button>
+  </nav>
 
   <!-- =============================================================== sheet -->
   <div class="sheet-backdrop" id="sheet-backdrop">

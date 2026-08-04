@@ -6,8 +6,9 @@ Any of .jpg .jpeg .png .webp works. Portrait 3:4 crops best.
 slot  file        what it is
 ----  ----------  ----------------------------------------------
 0     0.jpg       Golden hour, obviously   (not supplied yet)
-1     1.jpg       Sunday market   (not supplied yet)
+1     1.jpg       With my tribe   (not supplied yet)
 2     2.jpg       The one my mum likes   (not supplied yet)
+3     3.jpg       With the literal cutest   (not supplied yet)
 
 Any slot without a file falls back to the generated character artwork.
 

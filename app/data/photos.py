@@ -19,7 +19,12 @@ from pathlib import Path
 STATIC_IMG_DIR = Path(__file__).resolve().parents[2] / "static" / "img"
 REAL_PHOTO_SUFFIXES = (".jpg", ".jpeg", ".png", ".webp")
 
+# The character geometry below is drawn on a 900x1200 canvas. The rendered
+# frame is 3:2.8, so the SVG is emitted at that shape with a viewBox window onto
+# the interesting part — the art keeps its coordinates and the browser has
+# nothing left to crop.
 W, H = 900, 1200
+VIEW_Y, VIEW_H = 150, 840
 
 SKIN = "#FFD90F"          # the famous yellow
 SKIN_SHADOW = "#E8B90A"
@@ -225,23 +230,36 @@ def _face(cfg, index):
     return "".join(parts)
 
 
+def _hinge_team_card(index):
+    """The Hinge Team account gets the wordmark, not a face."""
+    tints = ["#1A1A1A", "#3E1768", "#67295F"]
+    bg = tints[index % len(tints)]
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{VIEW_H}" viewBox="0 0 {W} {VIEW_H}">
+  <rect width="{W}" height="{VIEW_H}" fill="{bg}"/>
+  <text x="{W // 2}" y="{VIEW_H // 2 + 46}" fill="#FFFFFF" text-anchor="middle"
+        font-family="Iowan Old Style, Palatino, Georgia, serif"
+        font-size="150" font-weight="600" letter-spacing="-6">hinge</text>
+  <text x="{W // 2}" y="{VIEW_H // 2 + 122}" fill="#FFFFFF" text-anchor="middle" opacity="0.55"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        font-size="36" letter-spacing="6">DESIGNED TO BE DELETED</text>
+</svg>"""
+
+
 def render_svg(profile_id, index, caption=""):
+    if profile_id == "hingeteam":
+        return _hinge_team_card(index)
+
     cfg = CHARACTERS.get(profile_id, DEFAULT)
     backdrop = BACKDROPS[index % len(BACKDROPS)]
 
+    # The caption is rendered by the UI as a footnote beneath the photo, so it is
+    # deliberately not drawn onto the image — doing both would show it twice, and
+    # burning text across a face is what the footnote exists to avoid. The
+    # parameter is kept so callers don't have to change.
     caption_markup = ""
-    if caption:
-        caption_markup = f"""
-  <rect x="0" y="{H - 230}" width="{W}" height="230" fill="url(#scrim)"/>
-  <text x="56" y="{H - 74}" fill="#FFFFFF" font-size="40" font-weight="600"
-        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">{_escape(caption)}</text>"""
 
-    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{VIEW_H}" viewBox="0 {VIEW_Y} {W} {VIEW_H}">
   <defs>
-    <linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
-      <stop offset="100%" stop-color="#000" stop-opacity="0.6"/>
-    </linearGradient>
     <clipPath id="frame"><rect width="{W}" height="{H}"/></clipPath>
   </defs>
   <g clip-path="url(#frame)">

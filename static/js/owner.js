@@ -15,6 +15,7 @@
   let openMatch = null;      // match currently being viewed in the conversation
   let seenMatches = new Set();
   let lastReactionId = null;
+  let seenSuggestions = new Set();
 
   /* ---------------------------------------------------------- utilities */
 
@@ -42,16 +43,68 @@
     render();
   });
 
+  /* ----------------------------------------------------------- tab bar */
+
+  /* Hidden before a session exists — the session-type picker is a flow, not a
+     destination, so a persistent nav there would let you wander out mid-setup. */
+  const TABBAR_SCREENS = ['wing', 'edit', 'type', 'invite', 'swipe', 'review', 'recap', 'matches', 'convo'];
+
+  function renderTabbar() {
+    const screen = WM.currentScreen();
+    const bar = $('tabbar');
+    bar.hidden = !TABBAR_SCREENS.includes(screen);
+    if (bar.hidden) return;
+
+    if (state) {
+      const avatar = $('tabbar-avatar');
+      const src = WM.photoSrc(state.owner_profile.id, state.owner_profile.photos[0], 0);
+      if (avatar.getAttribute('src') !== src) avatar.src = src;
+    }
+
+    // Which tab reads as current, given the screen we're on.
+    const active =
+      screen === 'swipe' ? 'swipe'
+      : screen === 'edit' ? 'edit'
+      : ['wing', 'type', 'invite', 'review', 'recap'].includes(screen) ? 'invite'
+      : null;
+    bar.querySelectorAll('[data-tab-to]').forEach((item) => {
+      item.classList.toggle('is-active', item.dataset.tabTo === active);
+    });
+  }
+
+  $('tabbar').addEventListener('click', (event) => {
+    const item = event.target.closest('[data-tab-to]');
+    if (!item || item.disabled) return;
+    if (WM.currentScreen() === 'edit') flushPendingEdit();
+
+    const to = item.dataset.tabTo;
+    // The Wing tab means "my session". Mid-session that's whichever surface the
+    // session is on; otherwise it's the start-or-join chooser.
+    if (to === 'invite') {
+      WM.showScreen(
+        state && state.status === 'active'
+          ? (state.mode === 'review' ? 'review' : 'swipe')
+          : 'wing'
+      );
+    } else {
+      WM.showScreen(to);
+    }
+    render();
+  });
+
   /* ------------------------------------------------- entry + session type */
 
-  $('open-wing-mode').addEventListener('click', () => {
+  $('wing-start').addEventListener('click', () => {
     WM.showScreen('type');
+    render();
   });
+
+  $('wing-join').addEventListener('click', openCodeEntry);
 
   /* Every Hinge profile carries the join affordance in its top right, the
      owner's included — being someone's wing isn't a separate mode you have to
      be invited into. */
-  $('open-code').addEventListener('click', () => {
+  function openCodeEntry() {
     WM.openCodeSheet({
       onSubmit: async (entered, errorEl) => {
         const response = await fetch(`/api/session/${entered}/preview`);
@@ -62,7 +115,7 @@
         window.location.href = `/j/${entered}`;
       }
     });
-  });
+  }
 
   document.querySelectorAll('.choice').forEach((choice) => {
     choice.addEventListener('click', () => {
@@ -134,7 +187,7 @@
 
   /* Logging out drops this session entirely — state lives on the server keyed
      by the code, so there's nothing local to clear beyond leaving the page. */
-  $('logout').addEventListener('click', () => {
+  function openLogout() {
     const sheet = WM.openSheet(`
       <h3 class="sheet__title">Log out?</h3>
       <p class="note">This ends your Wing Mode session. Anyone you invited will be
@@ -148,6 +201,10 @@
     sheet.querySelector('#logout-confirm').addEventListener('click', () => {
       window.location.href = '/';
     });
+  }
+
+  document.addEventListener('click', (event) => {
+    if (event.target.closest('.js-logout')) openLogout();
   });
 
   /* --------------------------------------------------------- swipe deck */
@@ -224,7 +281,9 @@
     if (!state) return;
     const screen = WM.currentScreen();
 
-    if (screen === 'hub') renderHub();
+    renderTabbar();
+
+    if (screen === 'wing') renderWing();
     else if (screen === 'invite') renderInvite();
     else if (screen === 'swipe') renderSwipe();
     else if (screen === 'review') renderReview();
@@ -234,13 +293,8 @@
     else if (screen === 'edit') renderEdit();
   }
 
-  function renderHub() {
-    $('hub-sub').textContent = `${state.owner_profile.name} · ${state.owner_profile.pronouns}`;
-    const hasRecap = (state.suggestions || []).length > 0;
-    $('hub-recap-link').hidden = !hasRecap;
-    ProfileView.render($('hub-profile'), state.owner_profile, {
-      attributions: state.attributions || []
-    });
+  function renderWing() {
+    $('wing-recap-link').hidden = !(state.suggestions || []).length;
   }
 
   function renderInvite() {
@@ -344,6 +398,7 @@
       reactions,
       attributions: state.attributions || []
     });
+    renderLiveSuggestions();
   }
 
   /* ---------------------------------------------------- edit own profile */
@@ -356,11 +411,50 @@
   let uploadingSlot = null;   // which slot the shared file input is aimed at
   let dragging = false;
 
+  let editTab = 'edit';
+  let friendsCardDismissed = false;
+
+  document.querySelectorAll('#edit-tabs [data-edit-tab]').forEach((button) => {
+    button.addEventListener('click', () => {
+      // Switching to View must not lose a half-typed field.
+      flushPendingEdit();
+      editTab = button.dataset.editTab;
+      document
+        .querySelectorAll('#edit-tabs [data-edit-tab]')
+        .forEach((other) => other.classList.toggle('is-active', other === button));
+      renderEdit();
+    });
+  });
+
+  $('edit-dismiss-card').addEventListener('click', () => {
+    friendsCardDismissed = true;
+    renderEdit();
+  });
+
+  $('edit-share-link').addEventListener('click', () => {
+    WM.showScreen('invite');
+    render();
+  });
+
   function renderEdit() {
     const profile = state.owner_profile;
     if (!photoDraft || photoDraft.length !== profile.photos.length) {
       photoDraft = profile.photos.map((_, index) => index);
     }
+
+    $('edit-edit-pane').hidden = editTab !== 'edit';
+    $('edit-view-pane').hidden = editTab !== 'view';
+    // Saving only belongs on the editing tab.
+    $('edit-footer').hidden = editTab !== 'edit';
+
+    if (editTab === 'view') {
+      // Exactly what a match would see — no editing affordances, no attribution.
+      ProfileView.render($('edit-preview'), profile, {});
+      return;
+    }
+
+    const card = document.querySelector('#edit-edit-pane .info-card');
+    if (card) card.hidden = friendsCardDismissed;
     // A state push arrives every time anyone reacts. Repainting a field the
     // owner is mid-sentence in would wipe what they typed, and repainting the
     // grid mid-drag would drop the tile, so both are skipped while in use.
@@ -393,7 +487,10 @@
     setTimeout(() => {
       markSaved();
       WM.toast('Profile updated 🪽', { wing: true, duration: 1600 });
-      WM.showScreen('hub');
+      editTab = 'view';
+      document.querySelectorAll('#edit-tabs [data-edit-tab]').forEach((b) =>
+        b.classList.toggle('is-active', b.dataset.editTab === 'view')
+      );
       render();
     }, 60);
   });
@@ -613,21 +710,7 @@
     }
 
     recap.photos.order_suggestions.forEach((suggestion) => {
-      parts.push(`
-        <div class="suggestion ${statusClass(suggestion)}">
-          <div class="suggestion__by">${WM.avatar(suggestion)} ${WM.esc(suggestion.friend_name)} suggested a new photo order</div>
-          <div class="order-compare">
-            <div class="order-compare__col">
-              <div class="order-compare__label">Current</div>
-              ${orderGrid(recap.photos.current)}
-            </div>
-            <div class="order-compare__col order-compare__col--new">
-              <div class="order-compare__label">Suggested</div>
-              ${orderGrid(suggestion.preview)}
-            </div>
-          </div>
-          ${suggestionControls(suggestion, 'Use this order')}
-        </div>`);
+      parts.push(orderSuggestionCard(suggestion, recap.photos.current));
     });
 
     groupByTarget(recap.photos.reactions).forEach((group) => {
@@ -642,19 +725,7 @@
     }
 
     recap.prompts.edit_suggestions.forEach((suggestion) => {
-      parts.push(`
-        <div class="suggestion ${statusClass(suggestion)}">
-          <div class="suggestion__by">
-            ${WM.avatar(suggestion)} ${WM.esc(suggestion.friend_name)}
-            ${suggestion.flagged ? '<span class="tag" style="color:var(--aubergine);border-color:var(--aubergine)">Flagged</span>' : ''}
-          </div>
-          <div class="prompt__q">${WM.esc(suggestion.question)}</div>
-          <div class="diff" style="margin-top: var(--s-3)">
-            <div class="diff__row diff__row--old">${WM.esc(suggestion.current_answer)}</div>
-            <div class="diff__row diff__row--new">${WM.esc(suggestion.suggested_answer)}</div>
-          </div>
-          ${suggestionControls(suggestion, 'Use this answer')}
-        </div>`);
+      parts.push(promptSuggestionCard(suggestion));
     });
 
     groupByTarget(recap.prompts.reactions).forEach((group) => {
@@ -698,6 +769,96 @@
     wireRecap();
   }
 
+  /* One card definition, used by the live review panel and the end-of-session
+     recap. Extracted so the two views can never drift apart. */
+  function orderSuggestionCard(suggestion, currentPhotos) {
+    return `
+      <div class="suggestion ${statusClass(suggestion)}">
+        <div class="suggestion__by">${WM.avatar(suggestion)} ${WM.esc(suggestion.friend_name)} suggested a new photo order</div>
+        <div class="order-compare">
+          <div class="order-compare__col">
+            <div class="order-compare__label">Current</div>
+            ${orderGrid(currentPhotos)}
+          </div>
+          <div class="order-compare__col order-compare__col--new">
+            <div class="order-compare__label">Suggested</div>
+            ${orderGrid(suggestion.preview)}
+          </div>
+        </div>
+        ${suggestionControls(suggestion, 'Use this order')}
+      </div>`;
+  }
+
+  function promptSuggestionCard(suggestion) {
+    return `
+      <div class="suggestion ${statusClass(suggestion)}">
+        <div class="suggestion__by">
+          ${WM.avatar(suggestion)} ${WM.esc(suggestion.friend_name)}
+          ${suggestion.flagged ? '<span class="tag" style="color:var(--aubergine);border-color:var(--aubergine)">Flagged</span>' : ''}
+        </div>
+        <div class="prompt__q">${WM.esc(suggestion.question)}</div>
+        <div class="diff" style="margin-top: var(--s-3)">
+          <div class="diff__row diff__row--old">${WM.esc(suggestion.current_answer)}</div>
+          <div class="diff__row diff__row--new">${WM.esc(suggestion.suggested_answer)}</div>
+        </div>
+        ${suggestionControls(suggestion, 'Use this answer')}
+      </div>`;
+  }
+
+  /* Suggestions as they land, on the owner's review screen. The server has no
+     status guard on approval, so these are actionable immediately — the owner
+     doesn't have to wait for the recap to accept something they already agree
+     with. The recap still exists as the catch-all for anything skipped. */
+  function renderLiveSuggestions() {
+    const host = $('review-suggestions');
+    if (!host) return;
+
+    const pending = (state.suggestions || []).filter((s) => s.status === 'pending');
+    $('review-count').textContent = pending.length ? `${pending.length} waiting` : '';
+    $('review-count').hidden = !pending.length;
+
+    /* Read from the recap payload, not the raw suggestion list. A photo-order
+       suggestion only gains its side-by-side `preview` when the server builds
+       the recap — rendering the raw list threw on every reorder and took the
+       whole panel down with it, which is why nothing appeared until the session
+       ended. Using the same source as the recap also keeps the two identical. */
+    const recap = state.recap;
+    if (!recap) {
+      host.innerHTML = '';
+      return;
+    }
+
+    const cards = [
+      ...recap.photos.order_suggestions.map((s) => orderSuggestionCard(s, recap.photos.current)),
+      ...recap.prompts.edit_suggestions.map((s) => promptSuggestionCard(s))
+    ];
+
+    if (!cards.length) {
+      host.innerHTML =
+        '<p class="note">Suggestions will appear here as your wings make them.</p>';
+      return;
+    }
+
+    host.innerHTML =
+      '<div class="recap-section__title" style="margin-top:0">Suggestions so far</div>' +
+      cards.join('');
+    wireSuggestionActions(host);
+  }
+
+  /* Accept / dismiss, shared by the live panel and the recap. */
+  function wireSuggestionActions(host) {
+    host.querySelectorAll('[data-accept]').forEach((button) => {
+      button.addEventListener('click', () =>
+        WM.send('recap_action', { suggestion_id: button.dataset.accept, accepted: true })
+      );
+    });
+    host.querySelectorAll('[data-reject]').forEach((button) => {
+      button.addEventListener('click', () =>
+        WM.send('recap_action', { suggestion_id: button.dataset.reject, accepted: false })
+      );
+    });
+  }
+
   function statusClass(suggestion) {
     if (suggestion.status === 'accepted') return 'is-accepted';
     if (suggestion.status === 'rejected') return 'is-rejected';
@@ -719,6 +880,7 @@
   }
 
   function orderGrid(photos) {
+    if (!photos || !photos.length) return '';
     return `<div class="order-grid">${photos
       .map(
         (photo, index) => `
@@ -804,16 +966,7 @@
   }
 
   function wireRecap() {
-    $('recap-body').querySelectorAll('[data-accept]').forEach((button) => {
-      button.addEventListener('click', () => {
-        WM.send('recap_action', { suggestion_id: button.dataset.accept, accepted: true });
-      });
-    });
-    $('recap-body').querySelectorAll('[data-reject]').forEach((button) => {
-      button.addEventListener('click', () => {
-        WM.send('recap_action', { suggestion_id: button.dataset.reject, accepted: false });
-      });
-    });
+    wireSuggestionActions($('recap-body'));
     $('recap-body').querySelectorAll('[data-jump]').forEach((button) => {
       button.addEventListener('click', () =>
         jumpToEdit(button.dataset.jump, Number(button.dataset.jumpIndex))
@@ -990,8 +1143,17 @@
     render();
   });
 
+  /* A wing arriving is the thing the owner is waiting for, so take them to the
+     waiting room rather than firing a toast at whatever screen they're on. The
+     roster only lives there, and a friend appearing in it is the moment the
+     session becomes real. Only while still setting up — once the session is
+     running, a late joiner must not yank the owner out of the deck. */
   WM.on('participant_joined', ({ participant }) => {
     WM.toast(`${WM.esc(participant.name)} joined your session 🪽`, { wing: true });
+    if (state && state.status === 'waiting' && WM.currentScreen() !== 'invite') {
+      WM.showScreen('invite');
+      render();
+    }
   });
 
   WM.on('reaction_added', ({ reaction }) => {
@@ -1025,6 +1187,19 @@
       render();
     });
     sheet.querySelector('#keep-swiping').addEventListener('click', WM.closeSheet);
+  });
+
+  /* A suggestion arriving is the moment the owner most wants to know about —
+     announce it, and let the live panel on the review screen pick it up from
+     the state push that follows. */
+  WM.on('suggestion_added', ({ suggestion }) => {
+    if (!suggestion || seenSuggestions.has(suggestion.id)) return;
+    seenSuggestions.add(suggestion.id);
+    const what =
+      suggestion.kind === 'photo_order'
+        ? 'suggested a new photo order'
+        : `rewrote “${suggestion.question}”`;
+    WM.toast(`${WM.esc(suggestion.friend_name)} ${WM.esc(what)} 🪽`, { wing: true, duration: 3200 });
   });
 
   WM.on('lock_extended', ({ friend_name }) => {

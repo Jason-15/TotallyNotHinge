@@ -1,0 +1,12 @@
+Hinge Team — Designed to be deleted, Los Angeles
+
+3 photos, named by slot number.
+Any of .jpg .jpeg .png .webp works. Portrait 3:2.8 crops best.
+
+slot  file        what it is
+----  ----------  ----------------------------------------------
+0     0.jpg       The team   (not supplied yet)
+1     1.jpg       Off-site, allegedly working   (not supplied yet)
+2     2.jpg       Someone's whiteboard   (not supplied yet)
+
+Any slot without a file falls back to the generated artwork.

@@ -22,6 +22,8 @@
   --mist: #c7c7e5;
   --sand: #ccac9f;
   --pebble: #eee1db;
+  /* A pale wash of Mauve, for the tinted explainer cards. */
+  --info-tint: #efe6ec;
   --stone: #484848;
   --forest: #025656;
   --kelp: #097270;

@@ -15,7 +15,7 @@
 
   <!-- ================================================ sign in (demo shim) -->
   <section class="screen is-active" data-screen="login">
-    <header class="topbar">
+        <header class="topbar">
       <div class="wordmark">hinge</div>
     </header>
     <div class="hold">
@@ -26,36 +26,37 @@
     </div>
   </section>
 
-  <!-- ============================= your own profile — code button top right -->
+  <!-- ================================ your own profile; 🪽 tab is the way in -->
   <section class="screen" data-screen="home">
-    <header class="topbar">
-      <div>
-        <div class="topbar__title">Edit Profile</div>
-        <div class="topbar__sub" id="home-sub"></div>
-      </div>
-      <div class="row">
-        <!-- The join affordance: any Hinge user can enter a code from their own
-             profile and become someone's wing. -->
-        <button class="code-btn" id="open-code">🪽 Enter code</button>
-        <button class="btn btn--quiet btn--sm" id="logout">Log out</button>
-      </div>
+        <header class="topbar">
+      <div class="wordmark">hinge</div>
+      <button class="btn btn--quiet btn--sm js-logout">Log out</button>
     </header>
-    <div class="scroll">
-      <div class="stack" style="padding-bottom:0">
-        <p class="note">Got a code from a friend? Tap <strong>Enter code</strong> above to
-        become their wing.</p>
+
+    <div class="screen-bar">
+      <div>
+        <div class="screen-bar__title">My profile</div>
+        <div class="screen-bar__sub" id="home-sub"></div>
       </div>
+    </div>
+    <div class="scroll">
       <div id="home-profile"></div>
     </div>
   </section>
 
   <!-- ============================================ Wing Mode welcome screen -->
   <section class="screen" data-screen="welcome">
-    <header class="topbar">
-      <button class="btn btn--quiet btn--sm" id="welcome-back">← Back</button>
-      <div class="pill">🪽 Wing Mode</div>
-      <span style="width:56px"></span>
+        <header class="topbar">
+      <div class="wordmark">hinge</div>
+      <button class="btn btn--quiet btn--sm js-logout">Log out</button>
     </header>
+
+    <div class="screen-bar">
+      <div><div class="screen-bar__title">🪽 Wing Mode</div></div>
+      <div class="screen-bar__actions">
+        <button class="btn btn--quiet btn--sm" id="welcome-back">← Back</button>
+      </div>
+    </div>
     <div class="welcome">
       <img class="welcome__photo" id="welcome-photo" alt="">
       <h1 class="welcome__title" id="welcome-title"></h1>
@@ -79,13 +80,18 @@
 
   <!-- ============================================= swiping together (friend) -->
   <section class="screen" data-screen="swipe">
-    <header class="topbar">
-      <div>
-        <div class="topbar__title" id="swipe-heading">Swiping together</div>
-        <div class="topbar__sub" id="swipe-privacy">Only they can see your input</div>
-      </div>
-      <div class="row" id="swipe-avatars"></div>
+        <header class="topbar">
+      <div class="wordmark">hinge</div>
+      <button class="btn btn--quiet btn--sm js-logout">Log out</button>
     </header>
+
+    <div class="screen-bar">
+      <div>
+        <div class="screen-bar__title" id="swipe-heading">Swiping together</div>
+        <div class="screen-bar__sub" id="swipe-privacy">Only they can see your input</div>
+      </div>
+      <div class="screen-bar__actions" id="swipe-avatars"></div>
+    </div>
 
     <div class="window-status" id="window-status">🪽 Decision window open — react now</div>
 
@@ -98,13 +104,18 @@
 
   <!-- ================================================ profile review (friend) -->
   <section class="screen" data-screen="review">
-    <header class="topbar">
-      <div>
-        <div class="topbar__title" id="review-heading">Profile Review</div>
-        <div class="topbar__sub">Suggestions only — nothing goes live without them</div>
-      </div>
-      <div class="row" id="review-avatars"></div>
+        <header class="topbar">
+      <div class="wordmark">hinge</div>
+      <button class="btn btn--quiet btn--sm js-logout">Log out</button>
     </header>
+
+    <div class="screen-bar">
+      <div>
+        <div class="screen-bar__title" id="review-heading">Profile Review</div>
+        <div class="screen-bar__sub">Suggestions only — nothing goes live without them</div>
+      </div>
+      <div class="screen-bar__actions" id="review-avatars"></div>
+    </div>
 
     <div class="segmented" id="review-tabs">
       <button data-tab="photos" class="is-active">Photos</button>
@@ -124,6 +135,9 @@
       <h2 class="hold__title">You're a great wing</h2>
       <p class="note" id="ended-body"></p>
       <div id="ended-updates" class="stack" style="width: 100%; padding: 0;"></div>
+      <!-- The session is over, but the room shouldn't be a dead end. -->
+      <button class="btn btn--ghost" id="ended-back">Back to my profile</button>
+      <p class="note" id="ended-rejoin"></p>
     </div>
   </section>
 
@@ -137,6 +151,33 @@
       <button class="btn btn--ghost" id="full-back">Back to my profile</button>
     </div>
   </section>
+
+  <!-- ============================================== Hinge black tab bar -->
+  <!-- Same shape as the owner's. The Wing tab goes to whichever session
+       surface this friend is currently in, rather than to an invite screen. -->
+  <nav class="tabbar" id="tabbar" hidden>
+    <!-- A wing has no Discover feed of their own — they only ever see the
+         profiles the owner is on. -->
+    <button class="tabbar__item" disabled title="Discover (not in this prototype)">
+      <span class="tabbar__h">H</span>
+    </button>
+    <button class="tabbar__item" data-tab-to="wing" title="Wing Mode">
+      <span class="tabbar__wing">🪽</span>
+    </button>
+    <button class="tabbar__item" disabled title="Likes (not in this prototype)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+        <path d="M12 20.5s-7.5-4.7-7.5-10a4.3 4.3 0 0 1 7.5-2.8A4.3 4.3 0 0 1 19.5 10c0 5.3-7.5 10.5-7.5 10.5Z"/>
+      </svg>
+    </button>
+    <button class="tabbar__item" disabled title="Messages (not in this prototype)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+        <path d="M4 5h16v11H8l-4 3.5V5Z" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <button class="tabbar__item" data-tab-to="home" title="My profile">
+      <img class="tabbar__avatar" id="tabbar-avatar" alt="">
+    </button>
+  </nav>
 
   <!-- =============================================================== sheet -->
   <div class="sheet-backdrop" id="sheet-backdrop">

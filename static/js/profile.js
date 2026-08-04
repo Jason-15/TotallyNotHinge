@@ -110,12 +110,19 @@ const ProfileView = (() => {
 
     if (block.type === 'photo') {
       // Resolves an uploaded photo's url, or falls back to the seed slot.
+      // The caption is a sibling, not an overlay: it has to sit under the photo
+      // rather than on it, and the block itself is a fixed-ratio clipped box.
+      const hasCaption = !!block.data.caption;
+      const caption = hasCaption
+        ? `<div class="photo-caption">${WM.esc(block.data.caption)}</div>`
+        : '';
       return `
-        <div class="block block--photo${reactable}" ${attrs}>
+        <div class="block block--photo${hasCaption ? ' is-captioned' : ''}${reactable}" ${attrs}>
           <img src="${WM.photoSrc(profile.id, block.data, block.index)}" alt="${WM.esc(block.data.caption || '')}" loading="lazy">
           ${stackMarkup(reactions)}
           ${marginNotesMarkup(reactions, options)}
-        </div>`;
+        </div>
+        ${caption}`;
     }
 
     return `

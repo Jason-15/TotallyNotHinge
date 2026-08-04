@@ -66,16 +66,16 @@ DECK = [
         ],
         "prompts": [
             {
+                    "question": "I'm looking for",
+                    "answer": "Honestly? I thought this app was for finding sandwiches.",
+            },
+            {
                 "question": "Two truths and a lie",
                 "answer": "I've been to space. I've been fired eleven times. I once ate 64 slices of cheese.",
             },
             {
                 "question": "My simple pleasures",
                 "answer": "Beer. Donuts. The exact moment the television turns on.",
-            },
-            {
-                "question": "I'm looking for",
-                "answer": "Honestly? I thought this app was for finding sandwiches.",
             },
         ],
     },
@@ -238,6 +238,23 @@ FRIEND_PROFILES = [
         "prompts": [
             {"question": "My simple pleasures", "answer": "Being right, quietly, about three weeks later."},
             {"question": "I'm looking for", "answer": "Nothing. I'm strictly here in an advisory capacity."},
+        ],
+    },
+    {
+        # For anyone from Hinge who wants to sit in on the session.
+        "id": "hingeteam",
+        "name": "Hinge Team",
+        "age": 12,
+        "job": "Designed to be deleted",
+        "location": "Los Angeles",
+        "photos": [
+            {"caption": "The team", "label": "team photo"},
+            {"caption": "Off-site, allegedly working", "label": "off-site photo"},
+            {"caption": "Someone's whiteboard", "label": "whiteboard photo"},
+        ],
+        "prompts": [
+            {"question": "My simple pleasures", "answer": "Watching a feature ship and nobody notices, because it just works."},
+            {"question": "I'm looking for", "answer": "Feedback. Genuinely. That's the whole job."},
         ],
     },
 ]
