@@ -410,7 +410,7 @@
       .map((originalIndex, position) => {
         const photo = profile.photos[originalIndex];
         return `
-          <div class="reorder-tile" data-position="${position}">
+          <div class="reorder-tile" data-position="${position}" data-photo-index="${originalIndex}">
             <img src="${WM.photoSrc(profile.id, photo, originalIndex)}" alt="">
             <span class="reorder-tile__index">${position + 1}</span>
             <span class="reorder-tile__swap">Replace</span>
@@ -532,7 +532,7 @@
     $('edit-prompts').innerHTML = prompts
       .map(
         (prompt, index) => `
-        <div class="edit-card">
+        <div class="edit-card" data-prompt-index="${index}">
           <label class="edit-field">
             <span class="edit-field__label">Prompt</span>
             <input type="text" data-prompt-q="${index}" value="${WM.esc(prompt.question)}" maxlength="80">
@@ -769,9 +769,38 @@
               </div>`
               )
               .join('')}
+            <!-- Reading feedback and acting on it are two different screens, so
+                 close the loop rather than making the owner go find it. -->
+            <button class="btn btn--ghost btn--sm" data-jump="${kind}" data-jump-index="${group.index}">
+              Go to ${kind === 'photo' ? 'photo' : 'prompt'}
+            </button>
           </div>
         </div>
       </div>`;
+  }
+
+  /* Open Edit Profile on the exact element a friend commented on. */
+  function jumpToEdit(kind, index) {
+    WM.showScreen('edit');
+    render();
+    // Wait a frame so the screen has painted before measuring scroll position.
+    requestAnimationFrame(() => {
+      const host = kind === 'photo' ? $('edit-photos') : $('edit-prompts');
+      const selector =
+        kind === 'photo'
+          ? `[data-photo-index="${index}"]`
+          : `[data-prompt-index="${index}"]`;
+      const node = host && host.querySelector(selector);
+      if (!node) return;
+      node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      node.classList.remove('is-jumped');
+      void node.offsetWidth; // restart the flash if the same target is used twice
+      node.classList.add('is-jumped');
+      setTimeout(() => node.classList.remove('is-jumped'), 2200);
+      // Put the cursor straight in the answer so they can start typing.
+      const field = node.querySelector('textarea, input');
+      if (field && kind === 'prompt') field.focus();
+    });
   }
 
   function wireRecap() {
@@ -784,6 +813,11 @@
       button.addEventListener('click', () => {
         WM.send('recap_action', { suggestion_id: button.dataset.reject, accepted: false });
       });
+    });
+    $('recap-body').querySelectorAll('[data-jump]').forEach((button) => {
+      button.addEventListener('click', () =>
+        jumpToEdit(button.dataset.jump, Number(button.dataset.jumpIndex))
+      );
     });
     const restore = $('restore-original');
     if (restore) {

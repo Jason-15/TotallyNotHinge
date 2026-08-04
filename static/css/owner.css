@@ -603,6 +603,22 @@
   box-shadow: 0 0 0 3px var(--wing);
 }
 
+/* Flash applied to whichever prompt or photo the owner jumped to from the
+   recap, so the thing they were just reading about is obvious on arrival. */
+.is-jumped {
+  animation: jumped 2.2s var(--ease);
+}
+@keyframes jumped {
+  0%,
+  100% {
+    box-shadow: var(--shadow-sm);
+  }
+  12%,
+  70% {
+    box-shadow: 0 0 0 3px var(--wing), var(--shadow-md);
+  }
+}
+
 /* Sticky so Save is reachable without scrolling to the bottom of the form. */
 .edit-footer {
   position: sticky;
