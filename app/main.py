@@ -25,6 +25,32 @@ app = FastAPI(title="WingMode", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
+
+def _asset_version():
+    """A token that changes whenever a CSS or JS file changes.
+
+    Static files go out with an ETag but no Cache-Control, so browsers fall back
+    to heuristic caching and can keep serving an old stylesheet after a deploy —
+    which shows up as new markup styled by old CSS. Versioning the URL sidesteps
+    caching entirely: changed file, changed URL.
+    """
+    newest = 0
+    for folder in ("css", "js"):
+        for path in (BASE_DIR / "static" / folder).glob("*"):
+            if path.is_file():
+                newest = max(newest, int(path.stat().st_mtime))
+    return str(newest)
+
+
+ASSET_VERSION = _asset_version()
+
+
+def render(request, template, context=None, **kwargs):
+    """TemplateResponse with the asset version always attached."""
+    return templates.TemplateResponse(
+        request, template, {"v": ASSET_VERSION, **(context or {})}, **kwargs
+    )
+
 INVITE_TEMPLATE = "{name} needs your expert opinion on Hinge — tap to join 🪽"
 
 
@@ -63,7 +89,7 @@ async def broadcast(session, payload, to_role=None, exclude=None):
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    return templates.TemplateResponse(request, "index.html")
+    return render(request, "index.html")
 
 
 @app.get("/owner/{code}", response_class=HTMLResponse)
@@ -71,9 +97,7 @@ async def owner_page(request: Request, code: str):
     session = store.get(code)
     if session is None:
         return _expired(request)
-    return templates.TemplateResponse(
-        request, "owner.html", {"code": session.code, "participant_id": session.owner.id}
-    )
+    return render(request, "owner.html", {"code": session.code, "participant_id": session.owner.id})
 
 
 @app.get("/friend", response_class=HTMLResponse)
@@ -83,9 +107,7 @@ async def friend_home(request: Request):
     They sign in as themselves and land on their own profile, where the
     join-by-code button sits in the top right. No session code in the URL.
     """
-    return templates.TemplateResponse(
-        request, "friend.html", {"code": "", "accounts": profiles.FRIEND_PROFILES}
-    )
+    return render(request, "friend.html", {"code": "", "accounts": profiles.FRIEND_PROFILES})
 
 
 @app.get("/j/{code}", response_class=HTMLResponse)
@@ -94,13 +116,11 @@ async def join_page(request: Request, code: str):
     session = store.get(code)
     if session is None:
         return _expired(request)
-    return templates.TemplateResponse(
-        request, "friend.html", {"code": session.code, "accounts": profiles.FRIEND_PROFILES}
-    )
+    return render(request, "friend.html", {"code": session.code, "accounts": profiles.FRIEND_PROFILES})
 
 
 def _expired(request):
-    return templates.TemplateResponse(
+    return render(
         request,
         "index.html",
         {"error": "That session has expired. Sessions are cleared when the server restarts."},

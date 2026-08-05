@@ -5,12 +5,12 @@ Any of .jpg .jpeg .png .webp works. Portrait 3:4 crops best.
 
 slot  file        what it is
 ----  ----------  ----------------------------------------------
-0     0.jpg       Mirror selfie, gym bathroom   (not supplied yet)
-1     1.jpg       I'm somewhere in this group photo   (not supplied yet)
-2     2.jpg       My coffee. Riveting.   (not supplied yet)
-3     3.jpg       Sunrise at the lookout   (not supplied yet)
-4     4.jpg       Pottery class, first attempt   (not supplied yet)
-5     5.jpg       Me and Biscuit   (not supplied yet)
+0     0.jpg       Couldn't find a mirror selfie
+1     1.jpg       Totally not AI generated
+2     2.jpg       Whatchu looking at?
+3     3.jpg       Sup
+4     4.jpg       Pottery class, first attempt 
+5     5.jpg       Busy
 
 Any slot without a file falls back to the generated character artwork.
 
