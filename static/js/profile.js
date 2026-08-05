@@ -185,6 +185,50 @@ const ProfileView = (() => {
     }
   }
 
+  /* A stable fingerprint of the profile's *content* — deliberately excluding
+     reactions. Lets a caller tell "the profile changed" from "someone reacted",
+     so the latter never triggers a rebuild. */
+  function contentKey(profile) {
+    if (!profile) return '';
+    const photos = (profile.photos || []).map((p) => `${p.url || ''}#${p.slot}`).join(',');
+    const prompts = (profile.prompts || [])
+      .map((p) => `${p.question}~${p.answer}`)
+      .join('|');
+    return [profile.id, profile.name, profile.age, profile.job, profile.location,
+            photos, prompts].join('|');
+  }
+
+  /* Swap only the reaction overlays, leaving every other node alone.
+
+     Re-rendering the whole profile on each incoming reaction destroyed and
+     rebuilt the DOM: images flashed as they were recreated, and the scroll
+     container collapsed to zero height and snapped the reader back to the top.
+     With four people in a session that happened constantly. */
+  function updateReactions(container, options = {}) {
+    const grouped = groupReactions(options.reactions);
+
+    container.querySelectorAll('.block').forEach((node) => {
+      const type = node.dataset.targetType;
+      const index = Number(node.dataset.targetIndex);
+      const list = grouped[`${type}:${index}`];
+
+      // Remove the previous overlays only; the image and prompt text survive.
+      Array.prototype.slice
+        .call(node.children)
+        .filter((child) =>
+          child.classList.contains('reaction-stack') ||
+          child.classList.contains('photo-notes') ||
+          child.classList.contains('reaction-note'))
+        .forEach((old) => old.remove());
+
+      const markup =
+        type === 'photo'
+          ? stackMarkup(list) + marginNotesMarkup(list, options)
+          : stackMarkup(list) + inlineNotesMarkup(list, options);
+      if (markup.trim()) node.insertAdjacentHTML('beforeend', markup);
+    });
+  }
+
   /* Used by the Wing Badge: bring the reacted element into view and flash it. */
   function spotlight(container, targetType, targetIndex) {
     const node = container.querySelector(
@@ -197,5 +241,5 @@ const ProfileView = (() => {
     node.classList.add('is-spotlit');
   }
 
-  return { render, spotlight, interleave };
+  return { render, updateReactions, contentKey, spotlight, interleave };
 })();

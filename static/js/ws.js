@@ -64,6 +64,15 @@ const WM = (() => {
   /* ------------------------------------------------------------ screens */
 
   function showScreen(name) {
+    /* Already here? Do nothing at all.
+
+       The friend's router calls this on every state push, so with several
+       people reacting it ran constantly. Each call re-toggled is-active — a
+       display:none -> flex round trip, which is the flicker — and reset
+       scrollTop, which is what kept yanking the reader back to the top.
+       Resetting scroll is right when you actually navigate, and only then. */
+    if (currentScreen() === name) return;
+
     document.querySelectorAll('[data-screen]').forEach((section) => {
       section.classList.toggle('is-active', section.dataset.screen === name);
     });

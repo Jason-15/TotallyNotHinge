@@ -282,6 +282,31 @@
 
   /* --------------------------------------------------- swiping together */
 
+  /* Render the profile once, then only swap reaction overlays.
+
+     Scroll is handled explicitly here because a full innerHTML rebuild
+     collapses the scroll container to zero height and the browser clamps
+     scrollTop to 0. Same person repainting (an accepted edit, a reorder) keeps
+     your place; a genuinely new profile starts at the top, which is what you
+     want after a Like. */
+  function paintProfile(host, profile, options) {
+    const key = ProfileView.contentKey(profile);
+    if (host.dataset.pkey === key) {
+      ProfileView.updateReactions(host, options);
+      return;
+    }
+
+    const samePerson = host.dataset.pid === String(profile.id);
+    const scroller = host.closest('.scroll');
+    const keepAt = samePerson && scroller ? scroller.scrollTop : 0;
+
+    host.dataset.pkey = key;
+    host.dataset.pid = String(profile.id);
+    ProfileView.render(host, profile, options);
+
+    if (scroller) scroller.scrollTop = keepAt;
+  }
+
   function renderSwipe() {
     const profile = state.current_profile;
     $('swipe-heading').textContent = `Swiping with ${state.owner.name}`;
@@ -306,11 +331,7 @@
       ? `🪽 ${remaining}s to react — ${state.owner.name} can't swipe yet`
       : `🪽 ${state.owner.name} can swipe now`;
 
-    const signature = `${profile.id}:${(state.reactions.current || []).length}`;
-    if (host.dataset.signature === signature) return;
-    host.dataset.signature = signature;
-
-    ProfileView.render(host, profile, {
+    paintProfile(host, profile, {
       reactions: state.reactions.current,
       reactable: true,
       onBlock: (targetType, targetIndex) =>
@@ -338,13 +359,35 @@
 
     const host = $('review-body');
     const reactions = (state.reactions && state.reactions.owner_profile) || [];
-    const signature = `${reviewTab}:${reactions.length}:${(state.suggestions || []).length}`;
-    if (host.dataset.signature === signature) return;
-    host.dataset.signature = signature;
+    const suggestionCount = (state.suggestions || []).length;
 
-    if (reviewTab === 'photos') renderReviewPhotos(host, profile, reactions);
-    else if (reviewTab === 'order') renderReorder(host, profile);
-    else renderPromptReview(host, profile, reactions);
+    /* Deliberately excludes the reaction count. Including it rebuilt this
+       markup on every reaction, which destroyed #review-profile-host — so the
+       profile inside was recreated from scratch and the screen jumped. Only
+       things that actually change this markup belong in the signature. */
+    const signature =
+      reviewTab === 'photos' ? 'photos'
+      : reviewTab === 'order' ? `order:${suggestionCount}`
+      : `prompts:${suggestionCount}`;
+
+    if (host.dataset.signature !== signature) {
+      host.dataset.signature = signature;
+      if (reviewTab === 'photos') renderReviewPhotos(host, profile, reactions);
+      else if (reviewTab === 'order') renderReorder(host, profile);
+      else renderPromptReview(host, profile, reactions);
+      return;
+    }
+
+    // Markup already correct — refresh only the reaction overlays.
+    if (reviewTab === 'photos') {
+      paintProfile($('review-profile-host'), profile, {
+        reactions,
+        reactable: true,
+        onBlock: (targetType, targetIndex) =>
+          openReactionSheet(profile.id, targetType, targetIndex,
+            blockPreview(profile, targetType, targetIndex))
+      });
+    }
   }
 
   function renderReviewPhotos(host, profile, reactions) {
@@ -352,7 +395,7 @@
       profile.name
     )} decides what actually changes.</p><div id="review-profile-host"></div>`;
 
-    ProfileView.render($('review-profile-host'), profile, {
+    paintProfile($('review-profile-host'), profile, {
       reactions,
       reactable: true,
       onBlock: (targetType, targetIndex) =>

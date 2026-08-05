@@ -331,6 +331,31 @@
       : 'Waiting for friends…';
   }
 
+  /* Render the profile once, then only swap reaction overlays.
+
+     Scroll is handled explicitly here because a full innerHTML rebuild
+     collapses the scroll container to zero height and the browser clamps
+     scrollTop to 0. Same person repainting (an accepted edit, a reorder) keeps
+     your place; a genuinely new profile starts at the top, which is what you
+     want after a Like. */
+  function paintProfile(host, profile, options) {
+    const key = ProfileView.contentKey(profile);
+    if (host.dataset.pkey === key) {
+      ProfileView.updateReactions(host, options);
+      return;
+    }
+
+    const samePerson = host.dataset.pid === String(profile.id);
+    const scroller = host.closest('.scroll');
+    const keepAt = samePerson && scroller ? scroller.scrollTop : 0;
+
+    host.dataset.pkey = key;
+    host.dataset.pid = String(profile.id);
+    ProfileView.render(host, profile, options);
+
+    if (scroller) scroller.scrollTop = keepAt;
+  }
+
   function renderSwipe() {
     const profile = state.current_profile;
     $('deck-progress').textContent = profile
@@ -352,11 +377,7 @@
     }
 
     const reactions = currentReactions();
-    const signature = `${profile.id}:${reactions.length}`;
-    if ($('swipe-profile').dataset.signature !== signature) {
-      ProfileView.render($('swipe-profile'), profile, { reactions });
-      $('swipe-profile').dataset.signature = signature;
-    }
+    paintProfile($('swipe-profile'), profile, { reactions });
 
     renderWingBadge(profile, reactions);
   }
@@ -394,7 +415,7 @@
     $('review-sub').textContent = names
       ? `${names} ${state.friends.length > 1 ? 'are' : 'is'} reviewing your profile`
       : 'Waiting for your friends';
-    ProfileView.render($('review-profile'), state.owner_profile, {
+    paintProfile($('review-profile'), state.owner_profile, {
       reactions,
       attributions: state.attributions || []
     });
@@ -828,6 +849,15 @@
       return;
     }
 
+    /* Rebuild only when a suggestion actually appears or changes state. This
+       panel sits on the same screen as the profile, and re-rendering it on
+       every reaction made the whole screen flicker too. */
+    const signature = (state.suggestions || [])
+      .map((s) => `${s.id}:${s.status}`)
+      .join(',') + '|' + ProfileView.contentKey(state.owner_profile);
+    if (host.dataset.signature === signature) return;
+    host.dataset.signature = signature;
+
     const cards = [
       ...recap.photos.order_suggestions.map((s) => orderSuggestionCard(s, recap.photos.current)),
       ...recap.prompts.edit_suggestions.map((s) => promptSuggestionCard(s))
@@ -1157,11 +1187,9 @@
   });
 
   WM.on('reaction_added', ({ reaction }) => {
-    if (reaction.id === lastReactionId) return;
+    // The state push that follows repaints the overlays in place; nothing to
+    // invalidate here.
     lastReactionId = reaction.id;
-    // Force a re-render of the current profile so the new reaction lands.
-    const host = $('swipe-profile');
-    if (host) host.dataset.signature = '';
   });
 
   WM.on('match_made', ({ match }) => {
